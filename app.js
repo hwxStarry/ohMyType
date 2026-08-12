@@ -8,6 +8,8 @@ const {
   defaultContents,
   escapeHtml,
   games,
+  getPinyin,
+  getWordTranslations,
   normalizePinyinInput,
   normalizeTitle,
   qs,
@@ -80,6 +82,14 @@ function getActiveContent() {
 
 function isPinyinContent() {
   return getActiveContent().category === '拼音'
+}
+
+function isChineseAnnotatedContent() {
+  return ['诗词', '文章', '文言文'].includes(getActiveContent().category)
+}
+
+function isWordContent() {
+  return getActiveContent().category === '单词'
 }
 
 function getCompareText() {
@@ -214,6 +224,20 @@ function editCustomContent(event, id) {
 }
 
 function renderTypingText() {
+  if (isWordContent()) {
+    renderWordBlocks()
+    return
+  }
+
+  if (isChineseAnnotatedContent()) {
+    renderChineseBlocks()
+    return
+  }
+
+  renderPlainText()
+}
+
+function renderPlainText() {
   const chars = Array.from(getCompareText())
   const typedChars = typing.getTypedChars()
 
@@ -229,6 +253,68 @@ function renderTypingText() {
     if (index < typedChars.length) className += typedChars[index] === char ? ' correct' : ' wrong'
     else if (index === typedChars.length) className += ' current'
     return `<span class="${className}">${char === ' ' ? '&nbsp;' : escapeHtml(char)}</span>`
+  }).join('')
+}
+
+function getCharClass(char, index, typedChars) {
+  let className = 'char'
+  if (index < typedChars.length) className += typedChars[index] === char ? ' correct' : ' wrong'
+  else if (index === typedChars.length) className += ' current'
+  return className
+}
+
+function getStatusClass(char, index, typedChars) {
+  if (index < typedChars.length) return typedChars[index] === char ? 'correct' : 'wrong'
+  if (index === typedChars.length) return 'current'
+  return ''
+}
+
+function renderChineseBlocks() {
+  const chars = Array.from(getCompareText())
+  const typedChars = typing.getTypedChars()
+
+  el.typingText.innerHTML = chars.map((char, index) => {
+    if (char === '\n') return `<span class="${getCharClass(char, index, typedChars)} newline"></span>`
+    if (char === ' ') return `<span class="${getCharClass(char, index, typedChars)} chinese-space">&nbsp;</span>`
+
+    const isChinese = /[\u4e00-\u9fff]/.test(char)
+    return `
+      <span class="annotated-char ${getCharClass(char, index, typedChars)}">
+        <span class="annotation-top">${isChinese ? escapeHtml(getPinyin(char)) : ''}</span>
+        <span class="annotation-main">${escapeHtml(char)}</span>
+      </span>
+    `
+  }).join('')
+}
+
+function renderWordBlocks() {
+  const item = getActiveContent()
+  const typedChars = typing.getTypedChars()
+  const translations = getWordTranslations(item)
+  const words = item.body.match(/\S+/g) || []
+  let startIndex = 0
+
+  el.typingText.innerHTML = words.map((word, wordIndex) => {
+    const letters = Array.from(word)
+    const wordStatus = letters.some((letter, letterIndex) => getStatusClass(letter, startIndex + letterIndex, typedChars) === 'current')
+      ? ' current'
+      : ''
+    const letterHtml = letters.map((letter, letterIndex) => {
+      const globalIndex = startIndex + letterIndex
+      return `<span class="${getCharClass(letter, globalIndex, typedChars)}">${escapeHtml(letter)}</span>`
+    }).join('')
+    const spacerIndex = startIndex + letters.length
+    const spacerHtml = wordIndex < words.length - 1
+      ? `<span class="${getCharClass(' ', spacerIndex, typedChars)} word-space">&nbsp;</span>`
+      : ''
+    startIndex += letters.length + (wordIndex < words.length - 1 ? 1 : 0)
+
+    return `
+      <span class="word-block${wordStatus}">
+        <span class="word-main">${letterHtml}</span>
+        <span class="annotation-bottom">${escapeHtml(translations[wordIndex] || '')}</span>
+      </span>${spacerHtml}
+    `
   }).join('')
 }
 

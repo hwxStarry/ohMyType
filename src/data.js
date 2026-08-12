@@ -42,19 +42,22 @@ const defaultContents = [
     id: 'words-basic',
     title: '基础单词',
     category: '单词',
-    body: 'apple book city desk early family green happy island journey kitchen letter music nature orange people quiet river school travel window'
+    body: 'apple book city desk early family green happy island journey kitchen letter music nature orange people quiet river school travel window',
+    translations: ['苹果', '书', '城市', '书桌', '早的', '家庭', '绿色', '快乐', '岛屿', '旅程', '厨房', '信件', '音乐', '自然', '橙子', '人们', '安静', '河流', '学校', '旅行', '窗户']
   },
   {
     id: 'words-school',
     title: '校园单词',
     category: '单词',
-    body: 'classroom homework teacher student pencil eraser ruler textbook library lesson subject science history English notebook exam grade'
+    body: 'classroom homework teacher student pencil eraser ruler textbook library lesson subject science history English notebook exam grade',
+    translations: ['教室', '作业', '老师', '学生', '铅笔', '橡皮', '尺子', '课本', '图书馆', '课程', '科目', '科学', '历史', '英语', '笔记本', '考试', '年级']
   },
   {
     id: 'words-tech',
     title: '科技单词',
     category: '单词',
-    body: 'computer keyboard monitor browser network server client function object module storage script style database terminal'
+    body: 'computer keyboard monitor browser network server client function object module storage script style database terminal',
+    translations: ['电脑', '键盘', '显示器', '浏览器', '网络', '服务器', '客户端', '函数', '对象', '模块', '存储', '脚本', '样式', '数据库', '终端']
   }
 ]
 

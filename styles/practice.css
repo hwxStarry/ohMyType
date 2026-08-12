@@ -129,6 +129,80 @@
   height: 16px;
 }
 
+.annotated-char,
+.word-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.annotated-char {
+  min-width: 1.15em;
+  margin: 0 2px 8px;
+  padding: 2px 3px;
+}
+
+.annotation-top {
+  min-height: 18px;
+  color: var(--zinc-400);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 18px;
+}
+
+.annotation-main {
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.18;
+}
+
+.annotated-char.correct .annotation-top,
+.annotated-char.correct .annotation-main,
+.word-block .char.correct {
+  color: #4ade80;
+}
+
+.annotated-char.wrong .annotation-top,
+.annotated-char.wrong .annotation-main,
+.word-block .char.wrong {
+  color: var(--red);
+}
+
+.annotated-char.current,
+.word-block.current {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chinese-space {
+  width: 0.5em;
+}
+
+.word-block {
+  margin: 0 4px 12px;
+  padding: 4px 6px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.word-main {
+  display: inline-flex;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 750;
+  line-height: 1.18;
+}
+
+.annotation-bottom {
+  min-height: 18px;
+  margin-top: 4px;
+  color: var(--zinc-500);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.word-space {
+  width: 0.45em;
+}
+
 .hidden-input {
   position: absolute;
   inset: 0;
