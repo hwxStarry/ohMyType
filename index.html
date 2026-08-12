@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oh My Type</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="appShell" class="app-shell">
+      <aside class="sidebar" aria-label="内容侧边栏">
+        <div class="side-head">
+          <a class="brand" href="./index.html" aria-label="Oh My Type 首页">
+            <span class="brand-mark">墨</span>
+            <span class="brand-text">Oh My Type</span>
+          </a>
+          <button id="sidebarToggle" class="side-toggle" type="button" aria-label="收起侧边栏" title="收起侧边栏">‹</button>
+        </div>
+
+        <div class="side-section">
+          <div class="side-title">练习内容</div>
+          <div id="contentList" class="content-list"></div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-title">栏目</div>
+          <button id="gamesTab" class="side-action" type="button">
+            <span>打字游戏</span>
+            <span class="count">6</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="mobileSidebarToggle" class="icon-button subtle" type="button" aria-label="展开侧边栏" title="展开侧边栏">☰</button>
+            <button id="resetButton" class="nav-button" type="button">
+              <span>↺</span>
+              <span>重来</span>
+            </button>
+          </div>
+          <h1 id="currentTitle">拼音入门</h1>
+          <div class="toolbar">
+            <span id="currentCategory" class="course-pill">拼音</span>
+            <button id="editButton" class="icon-button primary" type="button" aria-label="编辑或粘贴文本" title="编辑或粘贴文本">
+              ✎
+            </button>
+          </div>
+        </header>
+
+        <section id="practiceView" class="practice-layout">
+          <div class="practice-inner">
+            <div class="progress-row">
+              <span>课程进度</span>
+              <div class="progress-track">
+                <div id="progressBar" class="progress-bar"></div>
+              </div>
+              <strong id="progress">0%</strong>
+            </div>
+
+            <section id="textSection" class="practice-card text-card" tabindex="0" aria-label="练习文本">
+              <div class="card-head">
+                <h2>练习文本</h2>
+                <span id="positionInfo">第 1 / 0 字</span>
+              </div>
+              <div id="typingText" class="typing-text" aria-live="polite"></div>
+            </section>
+
+            <section class="practice-card keyboard-card" aria-label="键盘指法">
+              <div class="card-head">
+                <h2>键盘指法</h2>
+                <span id="expectedInfo">标准键盘</span>
+              </div>
+              <div id="virtualKeyboard" class="virtual-keyboard"></div>
+            </section>
+
+            <section class="stat-bar" aria-label="练习统计">
+              <div>
+                <small>速度</small>
+                <span><strong id="wpm">0</strong> WPM</span>
+              </div>
+              <div>
+                <small>准确率</small>
+                <span><strong id="accuracy">100%</strong></span>
+              </div>
+              <div>
+                <small>用时</small>
+                <span><strong id="duration">0</strong>s</span>
+              </div>
+            </section>
+          </div>
+          <textarea id="typingInput" class="hidden-input" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+        </section>
+
+        <section id="gamesView" class="games-view" hidden>
+          <div class="games-head">
+            <p class="eyebrow">开源连接</p>
+            <h2>打字游戏与练习项目</h2>
+            <p>收集一些值得体验和学习的打字练习项目，适合作为日常训练、玩法灵感和源码参考。</p>
+          </div>
+          <div id="gameLinks" class="game-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="editorDialog" class="editor-dialog">
+      <form method="dialog" class="editor-card">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">自定义文本</p>
+            <h2>粘贴你想练习的内容</h2>
+          </div>
+          <button id="closeEdit" class="icon-button" type="button" aria-label="关闭" title="关闭">×</button>
+        </div>
+        <label>
+          标题
+          <input id="customTitle" type="text" maxlength="24" placeholder="自动取第一行作为标题" />
+        </label>
+        <label>
+          分类
+          <select id="customCategory">
+            <option value="拼音">拼音</option>
+            <option value="诗词">诗词</option>
+            <option value="文章">文章</option>
+            <option value="文言文">文言文</option>
+            <option value="英语">英语</option>
+          </select>
+        </label>
+        <label>
+          <span class="label-row">
+            <span>内容</span>
+            <span id="customCounter">0 / 745</span>
+          </span>
+          <textarea id="customText" rows="12" maxlength="745" placeholder="复制任意文章、诗词、拼音或英文内容到这里"></textarea>
+        </label>
+        <p id="editorHint" class="editor-hint">内容长度按 typestart 课本中最长文言文《出师表》设置，上限 745 字符。</p>
+        <div class="dialog-actions">
+          <button class="text-button" value="cancel" type="button" id="cancelEdit">取消</button>
+          <button class="solid-button" value="default" type="submit">确定</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="resultModal" class="result-modal" hidden>
+      <section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+        <div class="result-icon">★</div>
+        <h2 id="resultTitle">练习完成</h2>
+        <p id="resultSubtitle">拼音入门</p>
+        <div class="result-grid">
+          <div>
+            <small>WPM</small>
+            <strong id="resultWpm">0</strong>
+          </div>
+          <div>
+            <small>准确率</small>
+            <strong id="resultAccuracy">100%</strong>
+          </div>
+          <div>
+            <small>CPM</small>
+            <strong id="resultCpm">0</strong>
+          </div>
+          <div>
+            <small>用时</small>
+            <strong id="resultDuration">1s</strong>
+          </div>
+        </div>
+        <p id="resultMeta" class="result-meta">总字符 0 · 错误 0</p>
+        <div class="result-actions">
+          <button id="reviewMistakesButton" class="soft-button" type="button">复习错题</button>
+          <button id="againButton" class="solid-button" type="button">再练一次</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
