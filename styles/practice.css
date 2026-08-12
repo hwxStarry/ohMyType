@@ -1,0 +1,252 @@
+.practice-layout {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.practice-inner {
+  width: min(100%, 960px);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px 24px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--zinc-400);
+  font-size: 12px;
+}
+
+.progress-track {
+  height: 6px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(63, 63, 70, 0.5);
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3b82f6, #34d399);
+  transition: width 180ms ease;
+}
+
+.progress-row strong {
+  min-width: 38px;
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 650;
+}
+
+.practice-card {
+  border: 1px solid var(--card-line);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.text-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 22px;
+  padding: clamp(20px, 3vw, 40px);
+  overflow-y: auto;
+  outline: none;
+}
+
+.keyboard-card {
+  flex: 0 0 auto;
+  margin-top: 16px;
+  padding: 18px clamp(16px, 3vw, 32px);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.card-head h2 {
+  margin: 0;
+  color: var(--zinc-400);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.card-head span {
+  color: var(--zinc-500);
+  font-size: 12px;
+}
+
+.typing-text {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 0;
+  font-family: ui-serif, "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.72;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+
+.char {
+  min-width: 0.35em;
+  border-radius: 4px;
+  color: var(--zinc-500);
+  transition: color 80ms ease, background 80ms ease;
+}
+
+.char.correct {
+  color: #4ade80;
+}
+
+.char.wrong {
+  color: var(--red);
+}
+
+.char.current {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.char.newline {
+  flex-basis: 100%;
+  height: 16px;
+}
+
+.hidden-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  opacity: 0;
+  resize: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.stat-bar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  margin-top: 16px;
+  border: 1px solid var(--card-line);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.stat-bar > div {
+  display: grid;
+  gap: 4px;
+  padding: 16px 20px;
+}
+
+.stat-bar > div + div {
+  border-left: 1px solid var(--card-line);
+}
+
+.stat-bar small {
+  color: var(--zinc-500);
+  font-size: 12px;
+}
+
+.stat-bar span {
+  color: var(--zinc-200);
+  font-size: clamp(20px, 3vw, 30px);
+  font-weight: 800;
+}
+
+.stat-bar div:nth-child(2) span {
+  color: var(--green);
+}
+
+.stat-bar strong {
+  font: inherit;
+}
+
+.virtual-keyboard {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 760px);
+  margin: 0 auto;
+  user-select: none;
+}
+
+.key-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.key {
+  position: relative;
+  min-width: 38px;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid rgba(82, 82, 91, 0.55);
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(63, 63, 70, 0.58);
+  color: var(--zinc-400);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.key.home {
+  border-color: rgba(59, 130, 246, 0.34);
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+}
+
+.key.expected {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.26);
+  transform: translateY(-2px);
+}
+
+.key.space {
+  width: min(34vw, 240px);
+}
+
+.key.wide {
+  min-width: 56px;
+}
+
+.key.extra-wide {
+  min-width: 78px;
+}
+
+.key.dot::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateX(-50%);
+  opacity: 0.7;
+}

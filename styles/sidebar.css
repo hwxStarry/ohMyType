@@ -1,0 +1,257 @@
+.sidebar {
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 14px 12px;
+  overflow: hidden;
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.brand {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.brand-mark {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #a83232;
+  color: #fff;
+  font-size: 15px;
+}
+
+.brand-text,
+.content-item strong,
+.content-item small,
+.content-item em,
+.category-toggle strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-toggle {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.app-shell.sidebar-collapsed .side-toggle {
+  transform: rotate(180deg);
+}
+
+.app-shell.sidebar-collapsed .brand-text,
+.app-shell.sidebar-collapsed .side-title,
+.app-shell.sidebar-collapsed .category-toggle strong,
+.app-shell.sidebar-collapsed .category-toggle small,
+.app-shell.sidebar-collapsed .content-item small,
+.app-shell.sidebar-collapsed .content-item em,
+.app-shell.sidebar-collapsed .side-action span:first-child,
+.app-shell.sidebar-collapsed .count {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .sidebar {
+  align-items: center;
+  padding-inline: 10px;
+}
+
+.app-shell.sidebar-collapsed .side-head,
+.app-shell.sidebar-collapsed .side-section,
+.app-shell.sidebar-collapsed .content-list {
+  width: 100%;
+}
+
+.app-shell.sidebar-collapsed .side-head {
+  flex-direction: column;
+}
+
+.app-shell.sidebar-collapsed .content-item,
+.app-shell.sidebar-collapsed .side-action {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 8px;
+}
+
+.side-section,
+.content-list,
+.category-group,
+.category-items,
+.content-item {
+  display: grid;
+}
+
+.side-section {
+  gap: 10px;
+}
+
+.side-title {
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.content-list {
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.category-group,
+.category-items {
+  gap: 6px;
+}
+
+.category-toggle,
+.content-item,
+.side-action {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.category-toggle {
+  color: var(--muted);
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+}
+
+.category-toggle:hover,
+.content-item:hover,
+.side-action:hover,
+.content-item.active,
+.side-action.active {
+  border-color: var(--line);
+  background: #f4f4f5;
+}
+
+.category-toggle strong {
+  min-width: 0;
+  font-size: 13px;
+}
+
+.category-toggle small,
+.count {
+  min-width: 22px;
+  height: 20px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #f4f4f5;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.content-item {
+  gap: 3px;
+  padding: 10px;
+}
+
+.content-item strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.content-main,
+.content-actions,
+.side-action {
+  display: flex;
+  align-items: center;
+}
+
+.content-main {
+  min-width: 0;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.content-actions {
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.edit-content,
+.delete-content {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: #a1a1aa;
+  line-height: 1;
+}
+
+.edit-content {
+  font-size: 13px;
+}
+
+.delete-content {
+  font-size: 17px;
+}
+
+.edit-content:hover,
+.edit-content:focus {
+  background: #dbeafe;
+  color: #2563eb;
+  outline: none;
+}
+
+.delete-content:hover,
+.delete-content:focus {
+  background: #fee2e2;
+  color: #dc2626;
+  outline: none;
+}
+
+.content-item small,
+.content-item em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.side-action {
+  justify-content: space-between;
+  padding: 10px;
+  font-weight: 650;
+}
+
+.count {
+  min-width: 24px;
+  height: 22px;
+  background: #e4e4e7;
+}

@@ -1,0 +1,81 @@
+@media (max-width: 980px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-shell,
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    height: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    width: min(300px, 82vw);
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .main-panel {
+    height: 100vh;
+  }
+
+  .icon-button.subtle {
+    display: grid;
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-inline: 10px;
+  }
+
+  .nav-button span:last-child,
+  .course-pill {
+    display: none;
+  }
+
+  .practice-inner {
+    padding: 16px 12px 12px;
+  }
+
+  .text-card {
+    margin-top: 16px;
+    padding: 18px 14px;
+  }
+
+  .keyboard-card {
+    padding: 14px 8px;
+  }
+
+  .stat-bar > div {
+    padding: 12px 10px;
+  }
+
+  .key {
+    min-width: 25px;
+    height: 34px;
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+
+  .key.wide {
+    min-width: 38px;
+  }
+
+  .key.extra-wide {
+    min-width: 52px;
+  }
+}
