@@ -1,6 +1,6 @@
 # Oh My Type
 
-Oh My Type is a static typing practice page inspired by the TypeStart client practice experience. It does not require a framework, build step, or package installation. Open `index.html` directly in a browser to use it.
+Oh My Type is a typing practice page for poems, articles, pinyin, and vocabulary drills. Open `index.html` directly in a browser to use it.
 
 ## Features
 
@@ -60,15 +60,7 @@ http://localhost:8080
 
 ## Development
 
-This project intentionally stays native:
-
-- No Vue, React, Nuxt, or other frontend framework.
-- No bundler.
-- No ES Module `import/export`.
-- Multiple plain `<script>` files are loaded in order.
-- Scripts share a small API through `window.OhMyType` and use IIFEs to avoid global redeclaration conflicts.
-
-Suggested placement for future changes:
+The code is split by page area and responsibility. Suggested placement for future changes:
 
 - Put content data in `src/data.js`.
 - Put typing state and input detection in `src/typing-state.js`.
@@ -86,14 +78,3 @@ The app uses these `localStorage` keys:
 - `ohmytype_open_categories`: expanded category state.
 - `typestart_history`: practice history.
 - `typestart_mistakes`: mistake statistics.
-
-## Remotes
-
-- Primary remote: Gitea `origin`
-- GitHub remote: `github`
-
-Push to GitHub `main`:
-
-```bash
-git push github master:main
-```

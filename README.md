@@ -1,6 +1,6 @@
 # Oh My Type
 
-Oh My Type 是一个纯静态的打字练习页面，参考 TypeStart 客户端的练习体验实现。它不依赖框架和构建工具，直接打开 `index.html` 即可使用。
+Oh My Type 是一个面向诗词、文章、拼音和单词的打字练习页面。打开 `index.html` 即可使用。
 
 ## 功能
 
@@ -58,17 +58,9 @@ http://localhost:8080
     └── responsive.css
 ```
 
-## 开发说明
+## 参与开发
 
-本项目保持原生实现：
-
-- 不使用 Vue、React、Nuxt 等框架。
-- 不使用打包器。
-- 不使用 ES Modules 的 `import/export`。
-- 多个普通 `<script>` 按顺序加载。
-- 各脚本通过 `window.OhMyType` 共享少量 API，并用 IIFE 隔离文件作用域，避免全局重复声明。
-
-新增功能时建议按职责放入已有文件：
+代码按页面区域和职责拆分，新增功能时建议放入对应文件：
 
 - 数据内容放 `src/data.js`。
 - 状态和输入检测放 `src/typing-state.js`。
@@ -86,14 +78,3 @@ http://localhost:8080
 - `ohmytype_open_categories`：分类展开状态。
 - `typestart_history`：练习历史。
 - `typestart_mistakes`：错字统计。
-
-## 仓库
-
-- 主要 remote：Gitea `origin`
-- GitHub remote：`github`
-
-推送到 GitHub main：
-
-```bash
-git push github master:main
-```
