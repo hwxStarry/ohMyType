@@ -9,7 +9,7 @@ const MISTAKE_KEY = 'typestart_mistakes'
 const CATEGORY_KEY = 'ohmytype_open_categories'
 
 const MAX_CUSTOM_LENGTH = 745
-const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '英语']
+const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语']
 
 const keyboardRows = [
   ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],

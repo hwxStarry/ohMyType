@@ -4,7 +4,7 @@ Oh My Type is a static typing practice page inspired by the TypeStart client pra
 
 ## Features
 
-- Built-in practice content for pinyin, poems, and articles.
+- Built-in practice content for pinyin, poems, articles, and word drills.
 - Category-based sidebar with expandable groups and a collapsible layout.
 - Hidden input capture with live correct, incorrect, and current-character highlighting.
 - Plain pinyin input without tone marks, with input-method-safe key capture.
@@ -97,4 +97,3 @@ Push to GitHub `main`:
 ```bash
 git push github master:main
 ```
-

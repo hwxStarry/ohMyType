@@ -37,6 +37,24 @@ const defaultContents = [
     title: '专注练习',
     category: '文章',
     body: '打字不是单纯追求速度。稳定的节奏、准确的落键、放松的肩背，都会在一次次练习里变成真正可靠的能力。'
+  },
+  {
+    id: 'words-basic',
+    title: '基础单词',
+    category: '单词',
+    body: 'apple book city desk early family green happy island journey kitchen letter music nature orange people quiet river school travel window'
+  },
+  {
+    id: 'words-school',
+    title: '校园单词',
+    category: '单词',
+    body: 'classroom homework teacher student pencil eraser ruler textbook library lesson subject science history English notebook exam grade'
+  },
+  {
+    id: 'words-tech',
+    title: '科技单词',
+    category: '单词',
+    body: 'computer keyboard monitor browser network server client function object module storage script style database terminal'
   }
 ]
 
