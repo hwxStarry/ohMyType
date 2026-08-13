@@ -119,9 +119,20 @@
 }
 
 .content-list {
+  max-height: 600px;
   gap: 10px;
   overflow-y: auto;
+
+  /* 隐藏 Firefox 滚动条 */
+  scrollbar-width: none;
+
+  /* 隐藏 IE 和 Edge 滚动条 */
+  -ms-overflow-style: none;
 }
+.content-list::-webkit-scrollbar {
+  display: none;
+}
+
 
 .category-group,
 .category-items {

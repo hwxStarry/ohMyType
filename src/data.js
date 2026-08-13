@@ -65,23 +65,23 @@ const games = [
   {
     title: 'Monkeytype',
     description: '高自定义打字测试网站，支持多模式、实时 WPM、准确率、主题和账户历史。',
-    href: 'https://github.com/monkeytypegame/monkeytype'
+    href: 'https://monkeytype.com/'
   },
   {
     title: 'TypeWords',
     description: '中文开发者维护的开源单词与文章练习工具，覆盖背词、文章默写和错词复习。',
-    href: 'https://github.com/zyronon/TypeWords'
+    href: 'https://typewords.cc/'
   },
   {
     title: 'Word Hopper',
     description: '浏览器横版跳跃打字游戏，输入障碍物上的单词并把握空格跳跃时机。',
-    href: 'https://github.com/WingEdge777/wordhopper'
+    href: 'https://wordhopper.wingedge777.com/'
   },
-  {
-    title: 'GuerillaType',
-    description: '自托管打字训练站，含课程、练习、挑战、公开文本库和本地统计。',
-    href: 'https://github.com/jonajinga/GuerillaType'
-  },
+  // {
+  //   title: 'GuerillaType',
+  //   description: '自托管打字训练站，含课程、练习、挑战、公开文本库和本地统计。',
+  //   href: 'https://github.com/jonajinga/GuerillaType'
+  // },
   {
     title: 'CodeType',
     description: '面向开发者的 VS Code 打字游戏，使用真实代码片段训练符号和缩进。',
