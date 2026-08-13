@@ -1,6 +1,6 @@
 (() => {
 window.OhMyType = window.OhMyType || {}
-
+var { pinyin } = pinyinPro;
 const pinyinByChar = {
   一: 'yi', 上: 'shang', 下: 'xia', 不: 'bu', 专: 'zhuan', 东: 'dong', 严: 'yan', 个: 'ge', 中: 'zhong',
   为: 'wei', 也: 'ye', 了: 'le', 书: 'shu', 事: 'shi', 五: 'wu', 人: 'ren', 今: 'jin', 他: 'ta',
@@ -30,8 +30,10 @@ const pinyinByChar = {
   闻: 'wen', 阳: 'yang', 随: 'sui', 静: 'jing', 靠: 'kao', 风: 'feng', 鸟: 'niao', 黄: 'huang'
 }
 
+
 function getPinyin(char) {
-  return pinyinByChar[char] || (/[\u4e00-\u9fff]/.test(char) ? '' : char)
+  // return pinyinByChar[char] || (/[\u4e00-\u9fff]/.test(char) ? '' : char)
+  return pinyin(char, { toneType: 'none' })
 }
 
 function getWordTranslations(item) {
