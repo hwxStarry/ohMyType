@@ -119,8 +119,9 @@ function isCompletedCorrectUnit(index, typedChars) {
   const targetChars = Array.from(getCompareText())
   if (index < 0 || index >= targetChars.length) return false
   if (typedChars[index] !== targetChars[index]) return false
-  if (isSeparator(targetChars[index])) return false
 
+  if (isPinyinContent() || isWordContent()) return true
+  if (isSeparator(targetChars[index])) return false
   if (isChineseAnnotatedContent()) return true
 
   const nextChar = targetChars[index + 1]
