@@ -4,6 +4,8 @@ const {
   CATEGORIES,
   MAX_CUSTOM_LENGTH,
   SIDEBAR_KEY,
+  completionSounds,
+  createCompletionAudio,
   createTypingState,
   defaultContents,
   escapeHtml,
@@ -26,7 +28,9 @@ const el = {
   againButton: qs('#againButton'),
   appShell: qs('#appShell'),
   cancelEdit: qs('#cancelEdit'),
+  cancelSound: qs('#cancelSound'),
   closeEdit: qs('#closeEdit'),
+  closeSound: qs('#closeSound'),
   contentList: qs('#contentList'),
   currentCategory: qs('#currentCategory'),
   currentTitle: qs('#currentTitle'),
@@ -57,7 +61,12 @@ const el = {
   resultWpm: qs('#resultWpm'),
   reviewMistakesButton: qs('#reviewMistakesButton'),
   sidebarToggle: qs('#sidebarToggle'),
+  soundButton: qs('#soundButton'),
+  soundDialog: qs('#soundDialog'),
+  soundPreset: qs('#soundPreset'),
+  soundUrl: qs('#soundUrl'),
   textSection: qs('#textSection'),
+  testSound: qs('#testSound'),
   typingInput: qs('#typingInput'),
   typingText: qs('#typingText'),
   virtualKeyboard: qs('#virtualKeyboard'),
@@ -67,6 +76,7 @@ const el = {
 let activeId = localStorage.getItem(ACTIVE_KEY) || defaultContents[0].id
 let activeView = 'practice'
 let durationTimer = 0
+const completionAudio = createCompletionAudio()
 
 if (localStorage.getItem(SIDEBAR_KEY) === '1') {
   el.appShell.classList.add('sidebar-collapsed')
@@ -99,6 +109,41 @@ function getCompareText() {
 
 function getExpectedKey() {
   return Array.from(getCompareText())[typing.getTypedChars().length] || ''
+}
+
+function isSeparator(char) {
+  return char === ' ' || char === '\n'
+}
+
+function isCompletedCorrectUnit(index, typedChars) {
+  const targetChars = Array.from(getCompareText())
+  if (index < 0 || index >= targetChars.length) return false
+  if (typedChars[index] !== targetChars[index]) return false
+  if (isSeparator(targetChars[index])) return false
+
+  if (isChineseAnnotatedContent()) return true
+
+  const nextChar = targetChars[index + 1]
+  if (nextChar && !isSeparator(nextChar)) return false
+
+  let start = index
+  while (start > 0 && !isSeparator(targetChars[start - 1])) start--
+  for (let i = start; i <= index; i++) {
+    if (typedChars[i] !== targetChars[i]) return false
+  }
+  return true
+}
+
+function handleTypingValue(value) {
+  const previousLength = typing.getTypedChars().length
+  typing.handleValue(value)
+  const typedChars = typing.getTypedChars()
+  if (typedChars.length <= previousLength) return
+
+  const hasCompletedUnit = typedChars
+    .slice(previousLength)
+    .some((char, offset) => isCompletedCorrectUnit(previousLength + offset, typedChars))
+  if (hasCompletedUnit) completionAudio.play()
 }
 
 const typing = createTypingState({
@@ -397,6 +442,37 @@ function updateCustomCounter() {
   el.customCounter.classList.toggle('over-limit', length > MAX_CUSTOM_LENGTH)
 }
 
+function renderSoundOptions() {
+  el.soundPreset.innerHTML = [
+    ...completionSounds.map(sound => `<option value="${escapeHtml(sound.id)}">${escapeHtml(sound.title)}</option>`),
+    '<option value="custom">自定义在线音频</option>'
+  ].join('')
+}
+
+function openSoundDialog() {
+  const settings = completionAudio.getSettings()
+  renderSoundOptions()
+  el.soundPreset.value = settings.preset
+  el.soundUrl.value = settings.customUrl
+  el.soundDialog.showModal()
+}
+
+function saveSoundSettings() {
+  completionAudio.setSettings({
+    preset: el.soundPreset.value,
+    customUrl: el.soundUrl.value
+  })
+  el.soundDialog.close()
+  focusTypingInput()
+}
+
+function previewSoundSettings() {
+  completionAudio.preview({
+    preset: el.soundPreset.value,
+    customUrl: el.soundUrl.value
+  })
+}
+
 function openEditor(item = getActiveContent()) {
   el.customTitle.value = item.isCustom ? item.title : ''
   el.customCategory.value = CATEGORIES.includes(item.category) ? item.category : '文章'
@@ -473,24 +549,24 @@ function createMistakeReview() {
 function bindEvents() {
   el.typingInput.addEventListener('input', () => {
     if (el.typingInput.dataset.composing === '1') return
-    typing.handleValue(isPinyinContent() ? normalizePinyinInput(el.typingInput.value) : el.typingInput.value)
+    handleTypingValue(isPinyinContent() ? normalizePinyinInput(el.typingInput.value) : el.typingInput.value)
   })
 
   el.typingInput.addEventListener('keydown', event => {
     if (!isPinyinContent() || event.isComposing) return
     if (event.key === 'Backspace') {
       event.preventDefault()
-      typing.handleValue(typing.getTypedChars().slice(0, -1).join(''))
+      handleTypingValue(typing.getTypedChars().slice(0, -1).join(''))
       return
     }
     if (event.key === 'Enter' && getExpectedKey() === '\n') {
       event.preventDefault()
-      typing.handleValue(`${typing.typedValue}\n`)
+      handleTypingValue(`${typing.typedValue}\n`)
       return
     }
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault()
-      typing.handleValue(typing.typedValue + normalizePinyinInput(event.key))
+      handleTypingValue(typing.typedValue + normalizePinyinInput(event.key))
     }
   })
 
@@ -504,7 +580,7 @@ function bindEvents() {
       el.typingInput.value = typing.typedValue
       return
     }
-    typing.handleValue(el.typingInput.value)
+    handleTypingValue(el.typingInput.value)
   })
 
   el.typingInput.addEventListener('blur', () => setTimeout(focusTypingInput, 0))
@@ -518,6 +594,7 @@ function bindEvents() {
     focusTypingInput()
   })
   el.editButton.addEventListener('click', () => openEditor())
+  el.soundButton.addEventListener('click', () => openSoundDialog())
   el.customText.addEventListener('input', () => {
     const chars = Array.from(el.customText.value)
     if (chars.length > MAX_CUSTOM_LENGTH) {
@@ -527,9 +604,16 @@ function bindEvents() {
   })
   el.cancelEdit.addEventListener('click', () => el.editorDialog.close())
   el.closeEdit.addEventListener('click', () => el.editorDialog.close())
+  el.cancelSound.addEventListener('click', () => el.soundDialog.close())
+  el.closeSound.addEventListener('click', () => el.soundDialog.close())
+  el.testSound.addEventListener('click', previewSoundSettings)
   el.editorDialog.addEventListener('submit', event => {
     event.preventDefault()
     saveEditorContent()
+  })
+  el.soundDialog.addEventListener('submit', event => {
+    event.preventDefault()
+    saveSoundSettings()
   })
 
   el.gamesTab.addEventListener('click', () => {

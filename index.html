@@ -49,6 +49,7 @@
           <h1 id="currentTitle">拼音入门</h1>
           <div class="toolbar">
             <span id="currentCategory" class="course-pill">拼音</span>
+            <button id="soundButton" class="icon-button" type="button" aria-label="音效设置" title="音效设置">♪</button>
             <button id="editButton" class="icon-button primary" type="button" aria-label="编辑或粘贴文本" title="编辑或粘贴文本">
               ✎
             </button>
@@ -149,6 +150,32 @@
       </form>
     </dialog>
 
+    <dialog id="soundDialog" class="editor-dialog">
+      <form method="dialog" class="editor-card">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">完成音效</p>
+            <h2>选择正确输入后的声音</h2>
+          </div>
+          <button id="closeSound" class="icon-button" type="button" aria-label="关闭" title="关闭">×</button>
+        </div>
+        <label>
+          音效
+          <select id="soundPreset"></select>
+        </label>
+        <label>
+          在线音频
+          <input id="soundUrl" type="url" placeholder="https://example.com/sound.mp3" />
+        </label>
+        <p class="editor-hint">选择自定义在线音频后，会在正确完整输入一个单位时播放这个地址。</p>
+        <div class="dialog-actions">
+          <button class="text-button" value="cancel" type="button" id="testSound">试听</button>
+          <button class="text-button" value="cancel" type="button" id="cancelSound">取消</button>
+          <button class="solid-button" value="default" type="submit">保存</button>
+        </div>
+      </form>
+    </dialog>
+
     <div id="resultModal" class="result-modal" hidden>
       <section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
         <div class="result-icon">★</div>
@@ -188,6 +215,7 @@
     <script src="./src/storage.js"></script>
     <script src="./src/keyboard.js"></script>
     <script src="./src/typing-state.js"></script>
+    <script src="./src/sounds.js"></script>
     <script src="./app.js"></script>
     <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
     <script>LA.init({id:"LHir1GpzFcKdVDaF",ck:"LHir1GpzFcKdVDaF",autoTrack:true})</script>
