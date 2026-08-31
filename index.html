@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="./styles/topbar.css" />
     <link rel="stylesheet" href="./styles/practice.css" />
     <link rel="stylesheet" href="./styles/games.css" />
+    <link rel="stylesheet" href="./styles/history.css" />
     <link rel="stylesheet" href="./styles/dialogs.css" />
     <link rel="stylesheet" href="./styles/responsive.css" />
   </head>
@@ -51,6 +52,14 @@
             <span>打字游戏</span>
             <span id="gamesCount" class="count">0</span>
           </button>
+          <button id="weakReviewTab" class="side-action" type="button">
+            <span>弱项复习</span>
+            <span id="mistakeCount" class="count">0</span>
+          </button>
+          <button id="historyTab" class="side-action" type="button">
+            <span>练习历史</span>
+            <span id="historyCount" class="count">0</span>
+          </button>
         </div>
 
         <div class="side-footer">
@@ -66,6 +75,7 @@
               <span>↺</span>
               <span>重来</span>
             </button>
+            <select id="practiceMode" class="mode-select" aria-label="练习模式"></select>
           </div>
           <h1 id="currentTitle">拼音入门</h1>
           <div class="toolbar">
@@ -123,11 +133,20 @@
 
         <section id="gamesView" class="games-view" hidden>
           <div class="games-head">
-            <p class="eyebrow">开源连接</p>
+            <p class="eyebrow">游戏连接</p>
             <h2>打字游戏与练习项目</h2>
-            <p>收集一些值得体验和学习的打字练习项目，适合作为日常训练、玩法灵感和源码参考。</p>
+            <p>优先打开可直接体验的练习页面，部分项目也提供源码入口，适合作为日常训练和玩法参考。</p>
           </div>
           <div id="gameLinks" class="game-grid"></div>
+        </section>
+
+        <section id="historyView" class="history-view" hidden>
+          <div class="history-head">
+            <p class="eyebrow">本地记录</p>
+            <h2>练习历史</h2>
+          </div>
+          <div id="historySummary" class="history-summary"></div>
+          <div id="historyList" class="history-list"></div>
         </section>
       </main>
     </div>

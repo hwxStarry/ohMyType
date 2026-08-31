@@ -3,6 +3,8 @@ const {
   ACTIVE_KEY,
   CATEGORIES,
   MAX_CUSTOM_LENGTH,
+  MODE_KEY,
+  PRACTICE_MODES,
   SIDEBAR_KEY,
   completionSounds,
   createCompletionAudio,
@@ -16,7 +18,9 @@ const {
   normalizeTitle,
   qs,
   readCustomContents,
+  readMistakes,
   readOpenCategories,
+  readPracticeHistory,
   renderKeyboard,
   summarizeBody,
   writeCustomContents,
@@ -46,9 +50,16 @@ const el = {
   gamesCount: qs('#gamesCount'),
   gamesTab: qs('#gamesTab'),
   gamesView: qs('#gamesView'),
+  historyCount: qs('#historyCount'),
+  historyList: qs('#historyList'),
+  historySummary: qs('#historySummary'),
+  historyTab: qs('#historyTab'),
+  historyView: qs('#historyView'),
+  mistakeCount: qs('#mistakeCount'),
   mobileSidebarToggle: qs('#mobileSidebarToggle'),
   positionInfo: qs('#positionInfo'),
   practiceView: qs('#practiceView'),
+  practiceMode: qs('#practiceMode'),
   progress: qs('#progress'),
   progressBar: qs('#progressBar'),
   resetButton: qs('#resetButton'),
@@ -71,12 +82,14 @@ const el = {
   typingInput: qs('#typingInput'),
   typingText: qs('#typingText'),
   virtualKeyboard: qs('#virtualKeyboard'),
+  weakReviewTab: qs('#weakReviewTab'),
   wpm: qs('#wpm')
 }
 
 let activeId = localStorage.getItem(ACTIVE_KEY) || defaultContents[0].id
 let activeView = 'practice'
 let durationTimer = 0
+let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
 const completionAudio = createCompletionAudio()
 
 if (localStorage.getItem(SIDEBAR_KEY) === '1') {
@@ -105,7 +118,21 @@ function isWordContent() {
 
 function getCompareText() {
   const target = getActiveContent().body
-  return isPinyinContent() ? normalizePinyinInput(target) : target
+  const normalized = isPinyinContent() ? normalizePinyinInput(target) : target
+  const countLimit = getCountLimit()
+  return countLimit ? Array.from(normalized).slice(0, countLimit).join('') : normalized
+}
+
+function getTimeLimit() {
+  if (practiceMode === 'time-30') return 30
+  if (practiceMode === 'time-60') return 60
+  return 0
+}
+
+function getCountLimit() {
+  if (practiceMode === 'count-20') return 20
+  if (practiceMode === 'count-50') return 50
+  return 0
 }
 
 function getExpectedKey() {
@@ -138,6 +165,19 @@ function isCompletedCorrectUnit(index, typedChars) {
 
 function handleTypingValue(value) {
   const previousLength = typing.getTypedChars().length
+  if (practiceMode === 'strict' && Array.from(value).length > previousLength) {
+    const targetChars = Array.from(getCompareText())
+    const nextChars = Array.from(value)
+    const hasWrongNewChar = nextChars.slice(previousLength).some((char, offset) => {
+      const index = previousLength + offset
+      return char !== targetChars[index]
+    })
+    if (hasWrongNewChar) {
+      el.typingInput.value = typing.typedValue
+      return
+    }
+  }
+
   typing.handleValue(value)
   const typedChars = typing.getTypedChars()
   if (typedChars.length <= previousLength) return
@@ -160,6 +200,8 @@ function renderContentList() {
   const contents = getContents()
   const openCategories = readOpenCategories()
   el.gamesCount.textContent = String(games.length)
+  el.historyCount.textContent = String(readPracticeHistory().length)
+  el.mistakeCount.textContent = String(Object.keys(readMistakes()).length)
   const grouped = CATEGORIES.map(category => ({
     category,
     items: contents.filter(item => item.category === category)
@@ -183,6 +225,7 @@ function renderContentList() {
 
   bindContentListEvents()
   el.gamesTab.classList.toggle('active', activeView === 'games')
+  el.historyTab.classList.toggle('active', activeView === 'history')
 }
 
 function renderContentItem(item) {
@@ -406,6 +449,7 @@ function renderPractice() {
   const active = getActiveContent()
   el.practiceView.hidden = false
   el.gamesView.hidden = true
+  el.historyView.hidden = true
   el.currentCategory.textContent = active.category
   el.currentTitle.textContent = active.title
   updatePracticeDisplay()
@@ -415,22 +459,73 @@ function renderPractice() {
 function renderGames() {
   el.practiceView.hidden = true
   el.gamesView.hidden = false
+  el.historyView.hidden = true
   el.currentCategory.textContent = '游戏'
   el.currentTitle.textContent = '打字游戏'
   el.gameLinks.innerHTML = games.map(game => `
-    <a class="game-card" href="${game.href}">
+    <article class="game-card">
       <div>
         <h3>${escapeHtml(game.title)}</h3>
         <p>${escapeHtml(game.description)}</p>
       </div>
-      <span>打开项目</span>
-    </a>
+      <div class="game-actions">
+        <a href="${game.href}" target="_blank" rel="noopener noreferrer">开始体验</a>
+        ${game.sourceHref ? `<a href="${game.sourceHref}" target="_blank" rel="noopener noreferrer">源码</a>` : ''}
+      </div>
+    </article>
+  `).join('')
+}
+
+function formatDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function renderHistory() {
+  const history = readPracticeHistory().slice().reverse()
+  const bestWpm = history.reduce((best, item) => Math.max(best, Number(item.wpm) || 0), 0)
+  const totalChars = history.reduce((total, item) => total + (Number(item.totalChars) || 0), 0)
+  const totalDuration = history.reduce((total, item) => total + (Number(item.duration) || 0), 0)
+  const avgAccuracy = history.length
+    ? Math.round(history.reduce((total, item) => total + (Number(item.accuracy) || 0), 0) / history.length)
+    : 100
+
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = false
+  el.currentCategory.textContent = '记录'
+  el.currentTitle.textContent = '练习历史'
+  el.historySummary.innerHTML = `
+    <div class="history-stat"><span>次数</span><strong>${history.length}</strong></div>
+    <div class="history-stat"><span>最高 WPM</span><strong>${bestWpm}</strong></div>
+    <div class="history-stat"><span>平均准确率</span><strong>${avgAccuracy}%</strong></div>
+    <div class="history-stat"><span>总字符</span><strong>${totalChars}</strong></div>
+    <div class="history-stat"><span>总用时</span><strong>${totalDuration}s</strong></div>
+  `
+
+  if (!history.length) {
+    el.historyList.innerHTML = '<p class="empty-state">还没有练习记录。</p>'
+    return
+  }
+
+  el.historyList.innerHTML = history.slice(0, 50).map(item => `
+    <article class="history-item">
+      <div>
+        <strong>${escapeHtml(item.lessonTitle || '未命名')}</strong>
+        <span>${escapeHtml(item.courseSlug || '')} · ${formatDate(item.date)}</span>
+      </div>
+      <span>WPM ${Number(item.wpm) || 0}</span>
+      <span>准确率 ${Number(item.accuracy) || 0}%</span>
+      <span>错误 ${Number(item.errors) || 0}</span>
+    </article>
   `).join('')
 }
 
 function render() {
   renderContentList()
   if (activeView === 'games') renderGames()
+  else if (activeView === 'history') renderHistory()
   else renderPractice()
 }
 
@@ -450,6 +545,14 @@ function renderSoundOptions() {
     ...completionSounds.map(sound => `<option value="${escapeHtml(sound.id)}">${escapeHtml(sound.title)}</option>`),
     '<option value="custom">自定义在线音频</option>'
   ].join('')
+}
+
+function renderPracticeModeOptions() {
+  el.practiceMode.innerHTML = PRACTICE_MODES.map(mode => `
+    <option value="${escapeHtml(mode.id)}">${escapeHtml(mode.title)}</option>
+  `).join('')
+  if (!PRACTICE_MODES.some(mode => mode.id === practiceMode)) practiceMode = 'free'
+  el.practiceMode.value = practiceMode
 }
 
 function openSoundDialog() {
@@ -523,7 +626,7 @@ function showResult() {
   el.resultAccuracy.textContent = `${stats.accuracy}%`
   el.resultCpm.textContent = String(stats.cpm)
   el.resultDuration.textContent = `${stats.durationSeconds}s`
-  el.resultMeta.textContent = `总字符 ${Array.from(active.body).length} · 错误 ${stats.errors}`
+  el.resultMeta.textContent = `总字符 ${Array.from(getCompareText()).length} · 错误 ${stats.errors}`
   el.reviewMistakesButton.hidden = stats.errors <= 0
   el.resultModal.hidden = false
 }
@@ -549,7 +652,36 @@ function createMistakeReview() {
   render()
 }
 
+function startWeakReview() {
+  const mistakeChars = Object.entries(readMistakes())
+    .sort((a, b) => b[1] - a[1])
+    .map(([char]) => char)
+    .filter(Boolean)
+    .slice(0, 40)
+  if (!mistakeChars.length) return
+
+  const body = mistakeChars.join('')
+  const customItems = readCustomContents()
+  const item = {
+    id: `weak-${Date.now()}`,
+    title: '弱项复习',
+    category: /^[a-zA-Z\s]+$/.test(body) ? '拼音' : '文章',
+    isCustom: true,
+    body
+  }
+  customItems.unshift(item)
+  writeCustomContents(customItems)
+  activeId = item.id
+  activeView = 'practice'
+  localStorage.setItem(ACTIVE_KEY, activeId)
+  typing.reset()
+  render()
+  focusTypingInput()
+}
+
 function bindEvents() {
+  renderPracticeModeOptions()
+
   el.typingInput.addEventListener('input', () => {
     if (el.typingInput.dataset.composing === '1') return
     handleTypingValue(isPinyinContent() ? normalizePinyinInput(el.typingInput.value) : el.typingInput.value)
@@ -623,6 +755,19 @@ function bindEvents() {
     activeView = 'games'
     render()
   })
+  el.historyTab.addEventListener('click', () => {
+    activeView = 'history'
+    render()
+  })
+  el.weakReviewTab.addEventListener('click', startWeakReview)
+  el.practiceMode.addEventListener('change', () => {
+    practiceMode = el.practiceMode.value
+    localStorage.setItem(MODE_KEY, practiceMode)
+    activeView = 'practice'
+    typing.reset()
+    render()
+    focusTypingInput()
+  })
   el.sidebarToggle.addEventListener('click', () => {
     const collapsed = el.appShell.classList.toggle('sidebar-collapsed')
     localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
@@ -653,7 +798,14 @@ function bindEvents() {
 bindEvents()
 render()
 durationTimer = window.setInterval(() => {
-  if (activeView === 'practice' && !typing.isFinished) updatePracticeDisplay()
+  if (activeView !== 'practice' || typing.isFinished) return
+  const stats = typing.getStats()
+  const timeLimit = getTimeLimit()
+  if (timeLimit && stats.typedLength > 0 && stats.durationSeconds >= timeLimit) {
+    typing.finishNow()
+    return
+  }
+  updatePracticeDisplay()
 }, 1000)
 
 })()

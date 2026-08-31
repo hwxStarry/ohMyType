@@ -22,9 +22,11 @@ Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 - Plain pinyin input without tone marks, with input-method-safe key capture.
 - Live WPM, accuracy, elapsed time, and progress statistics.
 - Virtual keyboard with next-key highlighting.
+- Practice modes for free typing, timed sessions, character limits, and strict blocking.
 - Custom practice text with category selection, edit, delete, and `localStorage` persistence.
 - Completion result modal with mistakes and practice history saved locally.
-- Typing game section with open-source project links for gameplay reference.
+- Weak review can generate a new practice item from locally recorded mistakes.
+- Typing game section with directly playable practice pages, plus source links where available.
 - Built-in feedback sounds with support for a custom online audio URL.
 
 ## Usage
@@ -76,6 +78,7 @@ http://localhost:8080
     ├── topbar.css
     ├── practice.css
     ├── games.css
+    ├── history.css
     ├── dialogs.css
     └── responsive.css
 ```
@@ -98,6 +101,7 @@ The app uses these `localStorage` keys:
 - `ohmytype_active_content`: selected content id.
 - `ohmytype_sidebar_collapsed`: sidebar collapsed state.
 - `ohmytype_open_categories`: expanded category state.
+- `ohmytype_practice_mode`: selected practice mode.
 - `typestart_history`: practice history.
 - `typestart_mistakes`: mistake statistics.
 - `ohmytype_completion_sound`: completion sound settings.

@@ -22,9 +22,11 @@ Oh My Type 是一个面向诗词、文章、拼音和单词的打字练习页面
 - 拼音练习使用无声调字母输入，并绕过中文输入法干扰。
 - 实时统计 WPM、准确率、用时和进度。
 - 虚拟键盘高亮下一键。
+- 支持自由练习、限时、限字和错字阻止等练习模式。
 - 自定义练习内容，可选择分类、编辑、删除，并保存到 `localStorage`。
 - 完成后显示成绩，并记录错字和练习历史到 `localStorage`。
-- 打字游戏栏目收集开源项目链接，可作为玩法参考。
+- 弱项复习会根据历史错字生成新的练习内容。
+- 打字游戏栏目收集可直接体验的练习页面，部分项目提供源码入口。
 - 内置多种按键反馈音效，也支持自定义在线音频。
 
 ## 使用
@@ -76,6 +78,7 @@ http://localhost:8080
     ├── topbar.css
     ├── practice.css
     ├── games.css
+    ├── history.css
     ├── dialogs.css
     └── responsive.css
 ```
@@ -98,6 +101,7 @@ http://localhost:8080
 - `ohmytype_active_content`：当前选中的内容。
 - `ohmytype_sidebar_collapsed`：侧边栏收起状态。
 - `ohmytype_open_categories`：分类展开状态。
+- `ohmytype_practice_mode`：练习模式。
 - `typestart_history`：练习历史。
 - `typestart_mistakes`：错字统计。
 - `ohmytype_completion_sound`：完成音效设置。

@@ -53,7 +53,6 @@
 
 .game-card:hover {
   border-color: rgba(59, 130, 246, 0.5);
-  transform: translateY(-2px);
 }
 
 .game-card h3 {
@@ -68,8 +67,29 @@
   font-size: 14px;
 }
 
-.game-card span {
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-actions a {
+  min-height: 34px;
+  border: 1px solid rgba(147, 197, 253, 0.32);
+  border-radius: 8px;
+  padding: 7px 11px;
   color: #93c5fd;
+  text-decoration: none;
   font-weight: 750;
   font-size: 13px;
+}
+
+.game-actions a:first-child {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.game-actions a:hover {
+  border-color: #93c5fd;
 }

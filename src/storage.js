@@ -31,6 +31,22 @@ function writeOpenCategories(categories) {
   localStorage.setItem(window.OhMyType.CATEGORY_KEY, JSON.stringify([...categories]))
 }
 
+function readPracticeHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(window.OhMyType.HISTORY_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
+function readMistakes() {
+  try {
+    return JSON.parse(localStorage.getItem(window.OhMyType.MISTAKE_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
 function savePracticeRecord({ active, stats, totalChars, errors, mistakeChars }) {
   try {
     const allMistakes = JSON.parse(localStorage.getItem(window.OhMyType.MISTAKE_KEY) || '{}')
@@ -39,7 +55,7 @@ function savePracticeRecord({ active, stats, totalChars, errors, mistakeChars })
     })
     localStorage.setItem(window.OhMyType.MISTAKE_KEY, JSON.stringify(allMistakes))
 
-    const history = JSON.parse(localStorage.getItem(window.OhMyType.HISTORY_KEY) || '[]')
+    const history = readPracticeHistory()
     history.push({
       date: new Date().toISOString(),
       lessonTitle: active.title,
@@ -61,7 +77,9 @@ function savePracticeRecord({ active, stats, totalChars, errors, mistakeChars })
 
 Object.assign(window.OhMyType, {
   readCustomContents,
+  readMistakes,
   readOpenCategories,
+  readPracticeHistory,
   savePracticeRecord,
   writeCustomContents,
   writeOpenCategories

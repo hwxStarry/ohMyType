@@ -43,6 +43,18 @@
   font-size: 14px;
 }
 
+.mode-select {
+  height: 36px;
+  max-width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #52525b;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .course-pill {
   max-width: 120px;
   overflow: hidden;

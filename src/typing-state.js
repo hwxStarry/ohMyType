@@ -15,7 +15,7 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
   }
 
   function getTargetChars() {
-    return Array.from(getActiveContent().body)
+    return getCompareChars()
   }
 
   function getCompareChars() {
@@ -131,6 +131,7 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
     getStats,
     getTypedChars,
     handleValue,
+    finishNow: finish,
     reset
   }
 }

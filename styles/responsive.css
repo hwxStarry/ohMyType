@@ -34,6 +34,11 @@
   .game-grid {
     grid-template-columns: 1fr;
   }
+
+  .history-summary,
+  .history-item {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -45,6 +50,10 @@
   .nav-button span:last-child,
   .course-pill {
     display: none;
+  }
+
+  .mode-select {
+    max-width: 92px;
   }
 
   .practice-inner {

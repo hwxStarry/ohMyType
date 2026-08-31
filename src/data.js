@@ -96,7 +96,20 @@ const games = [
   {
     title: 'Monkeytype',
     description: '高自定义打字测试网站，支持多模式、实时 WPM、准确率、主题和账户历史。',
-    href: 'https://monkeytype.com/'
+    href: 'https://monkeytype.com/',
+    sourceHref: 'https://github.com/monkeytypegame/monkeytype'
+  },
+  {
+    title: 'Qwerty Learner',
+    description: '把单词记忆和键盘肌肉记忆结合起来，内置大量考试、程序员和语言词库。',
+    href: 'https://qwerty.kaiyi.cool/',
+    sourceHref: 'https://github.com/RealKai42/qwerty-learner'
+  },
+  {
+    title: 'keybr.com',
+    description: '根据按键表现生成针对性练习，适合补弱项、练节奏和盲打基础。',
+    href: 'https://www.keybr.com/',
+    sourceHref: 'https://github.com/aradzie/keybr.com'
   },
   {
     title: 'TypeWords',
@@ -108,20 +121,44 @@ const games = [
     description: '浏览器横版跳跃打字游戏，输入障碍物上的单词并把握空格跳跃时机。',
     href: 'https://wordhopper.wingedge777.com/'
   },
-  // {
-  //   title: 'GuerillaType',
-  //   description: '自托管打字训练站，含课程、练习、挑战、公开文本库和本地统计。',
-  //   href: 'https://github.com/jonajinga/GuerillaType'
-  // },
+  {
+    title: 'ZType',
+    description: '经典英文打字射击游戏，输入屏幕上的单词来击落敌人，节奏感强。',
+    href: 'https://zty.pe/'
+  },
+  {
+    title: 'RawType',
+    description: '开源打字练习站，包含文章模式、单词模式、No-Mistake 和自定义练习。',
+    href: 'https://rawtype.net/'
+  },
   {
     title: 'CodeType',
     description: '面向开发者的 VS Code 打字游戏，使用真实代码片段训练符号和缩进。',
     href: 'https://codetype.ai/'
   },
   {
+    title: 'Eletypes',
+    description: '开源打字测试站，包含中文拼音、单词卡片、本地历史、主题和排行榜。',
+    href: 'https://www.eletypes.com/',
+    sourceHref: 'https://github.com/gamer-ai/eletypes-frontend'
+  },
+  {
+    title: 'TYPE',
+    description: '浏览器内自适应打字练习，根据表现解锁字母并提供基准测试。',
+    href: 'https://type.review/',
+    sourceHref: 'https://github.com/xiaolai/type-review'
+  },
+  {
+    title: 'TypeQuest',
+    description: '面向儿童的离线中文打字游戏，包含关卡、存档、成就和键位训练。',
+    href: 'https://wingwangsz.github.io/TypeQuest/',
+    sourceHref: 'https://github.com/wingwangsz/TypeQuest'
+  },
+  {
     title: 'Tux Typing',
     description: '经典 GPL 开源儿童打字游戏，包含 Fish Cascade 和 Comet Zap 等街机模式。',
-    href: 'https://tuxtyping.org/'
+    href: 'https://tuxtyping.org/',
+    sourceHref: 'https://github.com/tux4kids/tuxtype'
   }
 ]
 
