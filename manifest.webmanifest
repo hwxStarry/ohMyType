@@ -1,0 +1,19 @@
+{
+  "name": "Oh My Type",
+  "short_name": "Oh My Type",
+  "description": "面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#22252d",
+  "theme_color": "#22252d",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

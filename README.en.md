@@ -1,6 +1,18 @@
 # Oh My Type
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/hwxStarry/ohMyType?style=social)](https://github.com/hwxStarry/ohMyType)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 Oh My Type is a typing practice page for poems, articles, pinyin, and vocabulary drills. Open `index.html` directly in a browser to use it.
+
+Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
+
+## Good For
+
+- Daily practice for pinyin, keyboard positions, and English words.
+- Character-by-character practice for poems, short articles, and classical Chinese.
+- Quickly turning pasted text into a personal practice item.
+- Local-first practice without an account.
 
 ## Features
 
@@ -13,6 +25,7 @@ Oh My Type is a typing practice page for poems, articles, pinyin, and vocabulary
 - Custom practice text with category selection, edit, delete, and `localStorage` persistence.
 - Completion result modal with mistakes and practice history saved locally.
 - Typing game section with open-source project links for gameplay reference.
+- Built-in feedback sounds with support for a custom online audio URL.
 
 ## Usage
 
@@ -40,10 +53,19 @@ http://localhost:8080
 .
 ├── index.html          # Markup and script loading order
 ├── app.js              # App entry, DOM wiring, and event binding
+├── manifest.webmanifest
+├── robots.txt
+├── sitemap.xml
+├── assets/
+│   ├── favicon.svg
+│   └── sounds/         # Local sound files and source notes
 ├── src/
+│   ├── annotations.js  # Pinyin and word annotations
 │   ├── constants.js    # Constants, localStorage keys, categories, keyboard layout
 │   ├── data.js         # Built-in content and game links
 │   ├── keyboard.js     # Virtual keyboard rendering
+│   ├── pinyin.js       # Pinyin conversion library
+│   ├── sounds.js       # Completion sound settings and playback
 │   ├── storage.js      # localStorage helpers and practice history
 │   ├── typing-state.js # Typing state, error detection, completion handling
 │   └── utils.js        # HTML escaping, pinyin normalization, and helpers
@@ -78,3 +100,8 @@ The app uses these `localStorage` keys:
 - `ohmytype_open_categories`: expanded category state.
 - `typestart_history`: practice history.
 - `typestart_mistakes`: mistake statistics.
+- `ohmytype_completion_sound`: completion sound settings.
+
+## License
+
+Code is released under the [MIT License](./LICENSE). Local sound asset sources are listed in [assets/sounds/SOURCES.md](./assets/sounds/SOURCES.md).

@@ -3,7 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Oh My Type</title>
+    <meta name="description" content="Oh My Type 是一个面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。" />
+    <meta name="keywords" content="打字练习,拼音练习,诗词打字,文言文,单词练习,typing practice,pinyin" />
+    <meta name="author" content="hwxStarry" />
+    <meta name="theme-color" content="#22252d" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="https://ohmytype.mozhe.cc/" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="source" href="https://github.com/hwxStarry/ohMyType" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Oh My Type" />
+    <meta property="og:title" content="Oh My Type" />
+    <meta property="og:description" content="面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。" />
+    <meta property="og:url" content="https://ohmytype.mozhe.cc/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Oh My Type" />
+    <meta name="twitter:description" content="面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。" />
+    <title>Oh My Type - 拼音、诗词与单词打字练习</title>
     <link rel="stylesheet" href="./styles/base.css" />
     <link rel="stylesheet" href="./styles/sidebar.css" />
     <link rel="stylesheet" href="./styles/topbar.css" />
@@ -16,10 +33,10 @@
     <div id="appShell" class="app-shell">
       <aside class="sidebar" aria-label="内容侧边栏">
         <div class="side-head">
-          <a class="brand" href="./index.html" aria-label="Oh My Type 首页">
+          <div class="brand" aria-label="Oh My Type">
             <span class="brand-mark">墨</span>
             <span class="brand-text">Oh My Type</span>
-          </a>
+          </div>
           <button id="sidebarToggle" class="side-toggle" type="button" aria-label="收起侧边栏" title="收起侧边栏">‹</button>
         </div>
 
@@ -32,8 +49,12 @@
           <div class="side-title">栏目</div>
           <button id="gamesTab" class="side-action" type="button">
             <span>打字游戏</span>
-            <span class="count">6</span>
+            <span id="gamesCount" class="count">0</span>
           </button>
+        </div>
+
+        <div class="side-footer">
+          <a href="https://github.com/hwxStarry/ohMyType" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </aside>
 
@@ -219,5 +240,19 @@
     <script src="./app.js"></script>
     <script charset="UTF-8" id="LA_COLLECT" src="https://sdk.51.la/js-sdk-pro.min.js"></script>
     <script>if (window.LA) LA.init({id:"LHir1GpzFcKdVDaF",ck:"LHir1GpzFcKdVDaF",autoTrack:true})</script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Oh My Type",
+        "url": "https://ohmytype.mozhe.cc/",
+        "description": "面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web Browser",
+        "isAccessibleForFree": true,
+        "inLanguage": "zh-CN",
+        "license": "https://github.com/hwxStarry/ohMyType/blob/main/LICENSE"
+      }
+    </script>
   </body>
 </html>

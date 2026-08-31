@@ -27,6 +27,7 @@
   font-family: ui-serif, Georgia, "Times New Roman", serif;
   font-size: 18px;
   font-weight: 750;
+  user-select: none;
 }
 
 .brand-mark {
@@ -67,6 +68,7 @@
 
 .app-shell.sidebar-collapsed .brand-text,
 .app-shell.sidebar-collapsed .side-title,
+.app-shell.sidebar-collapsed .side-footer,
 .app-shell.sidebar-collapsed .category-toggle strong,
 .app-shell.sidebar-collapsed .category-toggle small,
 .app-shell.sidebar-collapsed .content-item small,
@@ -133,6 +135,21 @@
   display: none;
 }
 
+.side-footer {
+  margin-top: auto;
+  padding: 10px;
+}
+
+.side-footer a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.side-footer a:hover {
+  color: var(--accent);
+}
 
 .category-group,
 .category-items {

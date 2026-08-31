@@ -9,6 +9,18 @@ const defaultContents = [
     body: 'ba bo bi bu pa po pi pu ma mo mi mu fa fo fu\nda de di du ta te ti tu na ne ni nu la le li lu'
   },
   {
+    id: 'pinyin-initials',
+    title: '声母练习',
+    category: '拼音',
+    body: 'b p m f d t n l g k h j q x\nzh ch sh r z c s y w'
+  },
+  {
+    id: 'pinyin-finals',
+    title: '韵母练习',
+    category: '拼音',
+    body: 'a o e i u v ai ei ui ao ou iu ie ve er\nan en in un vn ang eng ing ong'
+  },
+  {
     id: 'poem-jingyesi',
     title: '静夜思',
     category: '诗词',
@@ -39,6 +51,18 @@ const defaultContents = [
     body: '打字不是单纯追求速度。稳定的节奏、准确的落键、放松的肩背，都会在一次次练习里变成真正可靠的能力。'
   },
   {
+    id: 'wenyan-loushiming',
+    title: '陋室铭',
+    category: '文言文',
+    body: '山不在高，有仙则名。水不在深，有龙则灵。斯是陋室，惟吾德馨。苔痕上阶绿，草色入帘青。谈笑有鸿儒，往来无白丁。'
+  },
+  {
+    id: 'wenyan-lunyu',
+    title: '论语节选',
+    category: '文言文',
+    body: '学而时习之，不亦说乎？有朋自远方来，不亦乐乎？人不知而不愠，不亦君子乎？温故而知新，可以为师矣。'
+  },
+  {
     id: 'words-basic',
     title: '基础单词',
     category: '单词',
@@ -58,6 +82,13 @@ const defaultContents = [
     category: '单词',
     body: 'computer keyboard monitor browser network server client function object module storage script style database terminal',
     translations: ['电脑', '键盘', '显示器', '浏览器', '网络', '服务器', '客户端', '函数', '对象', '模块', '存储', '脚本', '样式', '数据库', '终端']
+  },
+  {
+    id: 'words-cet4',
+    title: '四级高频',
+    category: '单词',
+    body: 'ability achieve active benefit compare culture develop economy education environment improve knowledge method process require society',
+    translations: ['能力', '实现', '积极的', '益处', '比较', '文化', '发展', '经济', '教育', '环境', '改善', '知识', '方法', '过程', '需要', '社会']
   }
 ]
 

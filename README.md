@@ -1,6 +1,18 @@
 # Oh My Type
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/hwxStarry/ohMyType?style=social)](https://github.com/hwxStarry/ohMyType)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 Oh My Type 是一个面向诗词、文章、拼音和单词的打字练习页面。打开 `index.html` 即可使用。
+
+在线体验：[https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
+
+## 适合
+
+- 拼音、键位和英文单词的日常练习。
+- 诗词、短文、文言文等中文内容的逐字输入训练。
+- 临时粘贴一段文本，快速生成自己的练习内容。
+- 不想注册账号，只想在浏览器本地保存练习记录的用户。
 
 ## 功能
 
@@ -13,6 +25,7 @@ Oh My Type 是一个面向诗词、文章、拼音和单词的打字练习页面
 - 自定义练习内容，可选择分类、编辑、删除，并保存到 `localStorage`。
 - 完成后显示成绩，并记录错字和练习历史到 `localStorage`。
 - 打字游戏栏目收集开源项目链接，可作为玩法参考。
+- 内置多种按键反馈音效，也支持自定义在线音频。
 
 ## 使用
 
@@ -40,10 +53,19 @@ http://localhost:8080
 .
 ├── index.html          # 页面结构和脚本加载顺序
 ├── app.js              # 应用入口，负责 DOM 装配和事件绑定
+├── manifest.webmanifest
+├── robots.txt
+├── sitemap.xml
+├── assets/
+│   ├── favicon.svg
+│   └── sounds/         # 本地音效资源和来源说明
 ├── src/
+│   ├── annotations.js  # 拼音和单词标注
 │   ├── constants.js    # 常量、localStorage key、分类、键盘布局
 │   ├── data.js         # 默认内容和游戏链接数据
 │   ├── keyboard.js     # 虚拟键盘渲染
+│   ├── pinyin.js       # 拼音转换库
+│   ├── sounds.js       # 完成音效设置和播放
 │   ├── storage.js      # localStorage 读写和历史记录
 │   ├── typing-state.js # 打字状态、错误检测、完成检测
 │   └── utils.js        # HTML 转义、拼音归一化等工具
@@ -78,3 +100,8 @@ http://localhost:8080
 - `ohmytype_open_categories`：分类展开状态。
 - `typestart_history`：练习历史。
 - `typestart_mistakes`：错字统计。
+- `ohmytype_completion_sound`：完成音效设置。
+
+## 许可
+
+代码采用 [MIT License](./LICENSE)。本地音效素材来源见 [assets/sounds/SOURCES.md](./assets/sounds/SOURCES.md)。

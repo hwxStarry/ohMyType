@@ -43,6 +43,7 @@ const el = {
   editorDialog: qs('#editorDialog'),
   expectedInfo: qs('#expectedInfo'),
   gameLinks: qs('#gameLinks'),
+  gamesCount: qs('#gamesCount'),
   gamesTab: qs('#gamesTab'),
   gamesView: qs('#gamesView'),
   mobileSidebarToggle: qs('#mobileSidebarToggle'),
@@ -158,6 +159,7 @@ const typing = createTypingState({
 function renderContentList() {
   const contents = getContents()
   const openCategories = readOpenCategories()
+  el.gamesCount.textContent = String(games.length)
   const grouped = CATEGORIES.map(category => ({
     category,
     items: contents.filter(item => item.category === category)
