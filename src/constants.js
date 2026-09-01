@@ -10,14 +10,14 @@ const CATEGORY_KEY = 'ohmytype_open_categories'
 const MODE_KEY = 'ohmytype_practice_mode'
 
 const MAX_CUSTOM_LENGTH = 745
-const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语']
+const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语', '对话·工作管理', '对话·客户沟通', '对话·面试问答', '对话·日常聊天', '对话·客服售后']
 const PRACTICE_MODES = [
-  { id: 'free', title: '自由练习' },
-  { id: 'time-30', title: '30 秒' },
-  { id: 'time-60', title: '60 秒' },
-  { id: 'count-20', title: '20 字' },
-  { id: 'count-50', title: '50 字' },
-  { id: 'strict', title: '错字阻止' }
+  { id: 'free', title: '不限时不限字', description: '按当前内容完整练完，不限制时间和字数。' },
+  { id: 'time-30', title: '30 秒限时', description: '输入开始后 30 秒自动结束。' },
+  { id: 'time-60', title: '60 秒限时', description: '输入开始后 60 秒自动结束。' },
+  { id: 'count-20', title: '20 字练习', description: '只练当前内容的前 20 个字符。' },
+  { id: 'count-50', title: '50 字练习', description: '只练当前内容的前 50 个字符。' },
+  { id: 'strict', title: '错字阻止', description: '敲错时不会录入错误字符。' }
 ]
 
 const keyboardRows = [

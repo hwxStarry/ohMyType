@@ -3,7 +3,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/hwxStarry/ohMyType?style=social)](https://github.com/hwxStarry/ohMyType)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-Oh My Type is a typing practice page for poems, articles, pinyin, and vocabulary drills. Open `index.html` directly in a browser to use it.
+Oh My Type is a typing practice page for poems, articles, pinyin, vocabulary drills, and dialogue practice. Open `index.html` directly in a browser to use it.
 
 Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 
@@ -11,15 +11,17 @@ Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 
 - Daily practice for pinyin, keyboard positions, and English words.
 - Character-by-character practice for poems, short articles, and classical Chinese.
+- Dialogue-style practice for boss replies, client communication, interviews, and support.
 - Quickly turning pasted text into a personal practice item.
 - Local-first practice without an account.
 
 ## Features
 
-- Built-in practice content for pinyin, poems, articles, and word drills.
-- Category-based sidebar with expandable groups and a collapsible layout.
+- Built-in practice content for pinyin, poems, articles, word drills, and boss dialogue.
+- Category-based sidebar with expandable groups, dialogue scenario subgroups, and a collapsible layout.
 - Hidden input capture with live correct, incorrect, and current-character highlighting.
 - Plain pinyin input without tone marks, with input-method-safe key capture.
+- Dialogue practice uses the boss as the user role, with scenarios for management, clients, interviews, daily chat, and support.
 - Live WPM, accuracy, elapsed time, and progress statistics.
 - Virtual keyboard with next-key highlighting.
 - Practice modes for free typing, timed sessions, character limits, and strict blocking.

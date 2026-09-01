@@ -1,3 +1,9 @@
+@media (max-width: 1400px) {
+  .game-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
   body {
     overflow: auto;
@@ -32,12 +38,16 @@
   }
 
   .game-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .history-summary,
   .history-item {
     grid-template-columns: 1fr;
+  }
+
+  .dialogue-bubble {
+    max-width: min(78%, 680px);
   }
 }
 
@@ -54,6 +64,27 @@
 
   .mode-select {
     max-width: 92px;
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .typing-text.dialogue-text {
+    font-size: 16px;
+    padding-inline: 10px;
+  }
+
+  .dialogue-bubble {
+    max-width: calc(100% - 48px);
+    padding: 10px 12px;
+  }
+
+  .dialogue-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+    font-size: 13px;
   }
 
   .practice-inner {

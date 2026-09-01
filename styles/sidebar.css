@@ -73,6 +73,7 @@
 .app-shell.sidebar-collapsed .category-toggle small,
 .app-shell.sidebar-collapsed .content-item small,
 .app-shell.sidebar-collapsed .content-item em,
+.app-shell.sidebar-collapsed .dialogue-subgroups,
 .app-shell.sidebar-collapsed .side-action span:first-child,
 .app-shell.sidebar-collapsed .count {
   display: none;
@@ -154,6 +155,29 @@
 .category-group,
 .category-items {
   gap: 6px;
+}
+
+.dialogue-subgroups {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  margin-left: 17px;
+}
+
+.category-subgroup {
+  display: grid;
+  gap: 6px;
+}
+
+.subcategory-toggle {
+  padding-block: 6px;
+}
+
+.subcategory-toggle strong {
+  font-size: 12px;
+}
+
+.subcategory-items {
+  padding-left: 6px;
 }
 
 .category-toggle,

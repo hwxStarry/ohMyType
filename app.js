@@ -86,14 +86,24 @@ const el = {
   wpm: qs('#wpm')
 }
 
-let activeId = localStorage.getItem(ACTIVE_KEY) || defaultContents[0].id
+const DIALOGUE_ROOT_CATEGORY = '对话'
+const DIALOGUE_CATEGORY_PREFIX = '对话·'
+let activeId = getInitialActiveId()
 let activeView = 'practice'
 let durationTimer = 0
 let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
 const completionAudio = createCompletionAudio()
 
-if (localStorage.getItem(SIDEBAR_KEY) === '1') {
+if (localStorage.getItem(SIDEBAR_KEY) !== '0') {
   el.appShell.classList.add('sidebar-collapsed')
+}
+
+function getInitialActiveId() {
+  const savedId = localStorage.getItem(ACTIVE_KEY)
+  if (savedId && [...defaultContents, ...readCustomContents()].some(item => item.id === savedId)) return savedId
+  const dialogueItems = defaultContents.filter(item => item.category.startsWith(DIALOGUE_CATEGORY_PREFIX))
+  if (!dialogueItems.length) return defaultContents[0].id
+  return dialogueItems[Math.floor(Math.random() * dialogueItems.length)].id
 }
 
 function getContents() {
@@ -114,6 +124,10 @@ function isChineseAnnotatedContent() {
 
 function isWordContent() {
   return getActiveContent().category === '单词'
+}
+
+function isDialogueContent() {
+  return getActiveContent().category.startsWith(DIALOGUE_CATEGORY_PREFIX) && Array.isArray(getActiveContent().messages)
 }
 
 function getCompareText() {
@@ -202,30 +216,74 @@ function renderContentList() {
   el.gamesCount.textContent = String(games.length)
   el.historyCount.textContent = String(readPracticeHistory().length)
   el.mistakeCount.textContent = String(Object.keys(readMistakes()).length)
-  const grouped = CATEGORIES.map(category => ({
+  const regularGroups = CATEGORIES.filter(category => !category.startsWith(DIALOGUE_CATEGORY_PREFIX)).map(category => ({
+    category,
+    items: contents.filter(item => item.category === category)
+  })).filter(group => group.items.length > 0)
+  const dialogueGroups = CATEGORIES.filter(category => category.startsWith(DIALOGUE_CATEGORY_PREFIX)).map(category => ({
     category,
     items: contents.filter(item => item.category === category)
   })).filter(group => group.items.length > 0)
 
-  el.contentList.innerHTML = grouped.map(group => {
-    const isOpen = openCategories.has(group.category)
-    return `
-      <section class="category-group">
-        <button class="category-toggle" type="button" data-category="${escapeHtml(group.category)}" aria-expanded="${isOpen}">
-          <span>${isOpen ? '⌄' : '›'}</span>
-          <strong>${escapeHtml(group.category)}</strong>
-          <small>${group.items.length}</small>
-        </button>
-        <div class="category-items" ${isOpen ? '' : 'hidden'}>
-          ${group.items.map(item => renderContentItem(item)).join('')}
-        </div>
-      </section>
-    `
-  }).join('')
+  el.contentList.innerHTML = [
+    ...regularGroups.map(group => renderCategoryGroup(group, openCategories)),
+    renderDialogueCategoryGroup(dialogueGroups, openCategories)
+  ].filter(Boolean).join('')
 
   bindContentListEvents()
   el.gamesTab.classList.toggle('active', activeView === 'games')
   el.historyTab.classList.toggle('active', activeView === 'history')
+}
+
+function renderCategoryGroup(group, openCategories) {
+  const isOpen = openCategories.has(group.category)
+  return `
+    <section class="category-group">
+      <button class="category-toggle" type="button" data-category="${escapeHtml(group.category)}" aria-expanded="${isOpen}">
+        <span>${isOpen ? '⌄' : '›'}</span>
+        <strong>${escapeHtml(group.category)}</strong>
+        <small>${group.items.length}</small>
+      </button>
+      <div class="category-items" ${isOpen ? '' : 'hidden'}>
+        ${group.items.map(item => renderContentItem(item)).join('')}
+      </div>
+    </section>
+  `
+}
+
+function renderDialogueCategoryGroup(groups, openCategories) {
+  if (!groups.length) return ''
+  const total = groups.reduce((sum, group) => sum + group.items.length, 0)
+  const isOpen = openCategories.has(DIALOGUE_ROOT_CATEGORY)
+  return `
+    <section class="category-group dialogue-category-group">
+      <button class="category-toggle" type="button" data-category="${DIALOGUE_ROOT_CATEGORY}" aria-expanded="${isOpen}">
+        <span>${isOpen ? '⌄' : '›'}</span>
+        <strong>${DIALOGUE_ROOT_CATEGORY}</strong>
+        <small>${total}</small>
+      </button>
+      <div class="category-items dialogue-subgroups" ${isOpen ? '' : 'hidden'}>
+        ${groups.map(group => renderDialogueSubgroup(group, openCategories)).join('')}
+      </div>
+    </section>
+  `
+}
+
+function renderDialogueSubgroup(group, openCategories) {
+  const isOpen = openCategories.has(group.category)
+  const title = group.category.replace(DIALOGUE_CATEGORY_PREFIX, '')
+  return `
+    <section class="category-subgroup">
+      <button class="category-toggle subcategory-toggle" type="button" data-category="${escapeHtml(group.category)}" aria-expanded="${isOpen}">
+        <span>${isOpen ? '⌄' : '›'}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <small>${group.items.length}</small>
+      </button>
+      <div class="category-items subcategory-items" ${isOpen ? '' : 'hidden'}>
+        ${group.items.map(item => renderContentItem(item)).join('')}
+      </div>
+    </section>
+  `
 }
 
 function renderContentItem(item) {
@@ -283,8 +341,9 @@ function selectContent(id) {
   activeId = id
   localStorage.setItem(ACTIVE_KEY, activeId)
   typing.reset()
+  resetTextScroll()
   render()
-  focusTypingInput()
+  focusTypingInput(true)
 }
 
 function removeCustomContent(event, id) {
@@ -297,8 +356,9 @@ function removeCustomContent(event, id) {
     typing.reset()
   }
   activeView = 'practice'
+  resetTextScroll()
   render()
-  focusTypingInput()
+  focusTypingInput(true)
 }
 
 function editCustomContent(event, id) {
@@ -310,11 +370,19 @@ function editCustomContent(event, id) {
   activeView = 'practice'
   localStorage.setItem(ACTIVE_KEY, activeId)
   typing.reset()
+  resetTextScroll()
   render()
   openEditor(item)
 }
 
 function renderTypingText() {
+  el.typingText.classList.toggle('dialogue-text', isDialogueContent())
+
+  if (isDialogueContent()) {
+    renderDialogueBlocks()
+    return
+  }
+
   if (isWordContent()) {
     renderWordBlocks()
     return
@@ -409,6 +477,58 @@ function renderWordBlocks() {
   }).join('')
 }
 
+function getDialogueSegments(item) {
+  let startIndex = 0
+  return item.messages.map((message, index) => {
+    const segment = {
+      incoming: message.incoming,
+      reply: message.reply,
+      startIndex,
+      newlineIndex: index < item.messages.length - 1 ? startIndex + Array.from(message.reply).length : -1
+    }
+    startIndex += Array.from(message.reply).length + (index < item.messages.length - 1 ? 1 : 0)
+    return segment
+  })
+}
+
+function renderDialogueBlocks() {
+  const item = getActiveContent()
+  const typedChars = typing.getTypedChars()
+  const targetChars = Array.from(getCompareText())
+
+  el.typingText.innerHTML = getDialogueSegments(item).map((segment, segmentIndex) => {
+    const replyChars = Array.from(segment.reply)
+    const replyHtml = replyChars.map((char, charIndex) => {
+      const globalIndex = segment.startIndex + charIndex
+      return `<span class="${getCharClass(char, globalIndex, typedChars)}">${escapeHtml(char)}</span>`
+    }).join('')
+    const newlineHtml = segment.newlineIndex > -1 && segment.newlineIndex < targetChars.length
+      ? `<span class="dialogue-enter ${getCharClass('\n', segment.newlineIndex, typedChars)}">Enter</span>`
+      : ''
+    const isCurrent = typedChars.length >= segment.startIndex && (
+      segment.newlineIndex === -1 ? typedChars.length <= segment.startIndex + replyChars.length : typedChars.length <= segment.newlineIndex
+    )
+
+    return `
+      <section class="dialogue-turn${isCurrent ? ' current' : ''}">
+        ${segmentIndex === 1 ? '<div class="dialogue-time">今天 14:30</div>' : ''}
+        <div class="dialogue-row incoming">
+          <span class="dialogue-avatar">员</span>
+          <div class="dialogue-bubble">
+            <p>${escapeHtml(segment.incoming)}</p>
+          </div>
+        </div>
+        <div class="dialogue-row reply">
+          <div class="dialogue-bubble">
+            <p>${replyHtml}${newlineHtml}</p>
+          </div>
+          <span class="dialogue-avatar">板</span>
+        </div>
+      </section>
+    `
+  }).join('')
+}
+
 function updatePracticeDisplay() {
   const target = Array.from(getCompareText())
   const stats = typing.getStats()
@@ -424,7 +544,7 @@ function updatePracticeDisplay() {
   el.positionInfo.textContent = `第 ${position} / ${target.length} 字`
   el.expectedInfo.textContent = expected ? `下一键 ${formatExpectedKey(expected)}` : '已完成'
   renderKeyboard(el.virtualKeyboard, expected)
-  scrollCurrentIntoView()
+  if (stats.typedLength > 0) scrollCurrentIntoView()
 }
 
 function formatExpectedKey(key) {
@@ -438,11 +558,17 @@ function scrollCurrentIntoView() {
   if (!current) return
   const sectionRect = el.textSection.getBoundingClientRect()
   const charRect = current.getBoundingClientRect()
-  if (charRect.bottom > sectionRect.bottom - 24) {
-    el.textSection.scrollBy({ top: charRect.bottom - sectionRect.bottom + 60, behavior: 'smooth' })
-  } else if (charRect.top < sectionRect.top + 24) {
-    el.textSection.scrollBy({ top: charRect.top - sectionRect.top - 60, behavior: 'smooth' })
+  const lowerEdge = sectionRect.top + sectionRect.height * 0.78
+  const upperEdge = sectionRect.top + sectionRect.height * 0.18
+  if (charRect.bottom > lowerEdge) {
+    el.textSection.scrollBy({ top: charRect.bottom - lowerEdge + 24, behavior: 'smooth' })
+  } else if (charRect.top < upperEdge && el.textSection.scrollTop > 0) {
+    el.textSection.scrollBy({ top: charRect.top - upperEdge - 24, behavior: 'smooth' })
   }
+}
+
+function resetTextScroll() {
+  el.textSection.scrollTop = 0
 }
 
 function renderPractice() {
@@ -453,16 +579,35 @@ function renderPractice() {
   el.currentCategory.textContent = active.category
   el.currentTitle.textContent = active.title
   updatePracticeDisplay()
-  requestAnimationFrame(focusTypingInput)
+  requestAnimationFrame(() => focusTypingInput(true))
 }
 
 function renderGames() {
+  const gameGroups = ['竞速类', '射击防守类', '格斗类', '儿童轻量类', '游戏合集', '练习工具']
   el.practiceView.hidden = true
   el.gamesView.hidden = false
   el.historyView.hidden = true
   el.currentCategory.textContent = '游戏'
   el.currentTitle.textContent = '打字游戏'
-  el.gameLinks.innerHTML = games.map(game => `
+  el.gameLinks.innerHTML = gameGroups.map(group => {
+    const items = games.filter(game => (game.group || '练习工具') === group)
+    if (!items.length) return ''
+    return `
+      <section class="game-group">
+        <div class="game-group-head">
+          <h3>${escapeHtml(group)}</h3>
+          <span>${items.length}</span>
+        </div>
+        <div class="game-grid">
+          ${items.map(renderGameCard).join('')}
+        </div>
+      </section>
+    `
+  }).join('')
+}
+
+function renderGameCard(game) {
+  return `
     <article class="game-card">
       <div>
         <h3>${escapeHtml(game.title)}</h3>
@@ -473,7 +618,7 @@ function renderGames() {
         ${game.sourceHref ? `<a href="${game.sourceHref}" target="_blank" rel="noopener noreferrer">源码</a>` : ''}
       </div>
     </article>
-  `).join('')
+  `
 }
 
 function formatDate(value) {
@@ -529,8 +674,16 @@ function render() {
   else renderPractice()
 }
 
-function focusTypingInput() {
+function focusTypingInput(force = false) {
   if (activeView !== 'practice' || el.editorDialog.open || typing.isFinished) return
+  if (!force) {
+    const activeElement = document.activeElement
+    const shouldKeepCurrentFocus = activeElement && activeElement !== document.body && activeElement !== el.typingInput && (
+      activeElement.closest('button, a, input, select, textarea, dialog') ||
+      activeElement.closest('.sidebar, .topbar')
+    )
+    if (shouldKeepCurrentFocus) return
+  }
   el.typingInput.focus({ preventScroll: true })
 }
 
@@ -549,10 +702,12 @@ function renderSoundOptions() {
 
 function renderPracticeModeOptions() {
   el.practiceMode.innerHTML = PRACTICE_MODES.map(mode => `
-    <option value="${escapeHtml(mode.id)}">${escapeHtml(mode.title)}</option>
+    <option value="${escapeHtml(mode.id)}" title="${escapeHtml(mode.description)}">${escapeHtml(mode.title)}</option>
   `).join('')
   if (!PRACTICE_MODES.some(mode => mode.id === practiceMode)) practiceMode = 'free'
   el.practiceMode.value = practiceMode
+  const activeMode = PRACTICE_MODES.find(mode => mode.id === practiceMode)
+  el.practiceMode.title = activeMode ? activeMode.description : ''
 }
 
 function openSoundDialog() {
@@ -569,7 +724,7 @@ function saveSoundSettings() {
     customUrl: el.soundUrl.value
   })
   el.soundDialog.close()
-  focusTypingInput()
+  focusTypingInput(true)
 }
 
 function previewSoundSettings() {
@@ -613,8 +768,9 @@ function saveEditorContent() {
   localStorage.setItem(ACTIVE_KEY, activeId)
   el.editorDialog.close()
   typing.reset()
+  resetTextScroll()
   render()
-  focusTypingInput()
+  focusTypingInput(true)
 }
 
 function showResult() {
@@ -649,6 +805,7 @@ function createMistakeReview() {
   activeView = 'practice'
   localStorage.setItem(ACTIVE_KEY, activeId)
   typing.reset()
+  resetTextScroll()
   render()
 }
 
@@ -675,8 +832,9 @@ function startWeakReview() {
   activeView = 'practice'
   localStorage.setItem(ACTIVE_KEY, activeId)
   typing.reset()
+  resetTextScroll()
   render()
-  focusTypingInput()
+  focusTypingInput(true)
 }
 
 function bindEvents() {
@@ -719,14 +877,15 @@ function bindEvents() {
   })
 
   el.typingInput.addEventListener('blur', () => setTimeout(focusTypingInput, 0))
-  el.textSection.addEventListener('click', focusTypingInput)
-  el.textSection.addEventListener('focus', focusTypingInput)
+  el.textSection.addEventListener('click', () => focusTypingInput(true))
+  el.textSection.addEventListener('focus', () => focusTypingInput(true))
 
   el.resetButton.addEventListener('click', () => {
     activeView = 'practice'
     typing.reset()
+    resetTextScroll()
     render()
-    focusTypingInput()
+    focusTypingInput(true)
   })
   el.editButton.addEventListener('click', () => openEditor())
   el.soundButton.addEventListener('click', () => openSoundDialog())
@@ -763,15 +922,18 @@ function bindEvents() {
   el.practiceMode.addEventListener('change', () => {
     practiceMode = el.practiceMode.value
     localStorage.setItem(MODE_KEY, practiceMode)
+    const activeMode = PRACTICE_MODES.find(mode => mode.id === practiceMode)
+    el.practiceMode.title = activeMode ? activeMode.description : ''
     activeView = 'practice'
     typing.reset()
+    resetTextScroll()
     render()
-    focusTypingInput()
+    focusTypingInput(true)
   })
   el.sidebarToggle.addEventListener('click', () => {
     const collapsed = el.appShell.classList.toggle('sidebar-collapsed')
     localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
-    focusTypingInput()
+    focusTypingInput(true)
   })
   el.mobileSidebarToggle.addEventListener('click', () => {
     el.appShell.classList.toggle('sidebar-open')
@@ -789,8 +951,9 @@ function bindEvents() {
 
   el.againButton.addEventListener('click', () => {
     typing.reset()
+    resetTextScroll()
     render()
-    focusTypingInput()
+    focusTypingInput(true)
   })
   el.reviewMistakesButton.addEventListener('click', createMistakeReview)
 }

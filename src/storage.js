@@ -5,12 +5,17 @@ function readCustomContents() {
   try {
     return JSON.parse(localStorage.getItem(window.OhMyType.CUSTOM_KEY) || '[]').map(item => ({
       ...item,
-      category: window.OhMyType.CATEGORIES.includes(item.category) ? item.category : '文章',
+      category: normalizeCategory(item.category),
       isCustom: true
     }))
   } catch {
     return []
   }
+}
+
+function normalizeCategory(category) {
+  if (category === '对话') return '对话·工作管理'
+  return window.OhMyType.CATEGORIES.includes(category) ? category : '文章'
 }
 
 function writeCustomContents(items) {
@@ -20,10 +25,10 @@ function writeCustomContents(items) {
 function readOpenCategories() {
   try {
     const raw = localStorage.getItem(window.OhMyType.CATEGORY_KEY)
-    if (!raw) return new Set(window.OhMyType.CATEGORIES)
+    if (!raw) return new Set([...window.OhMyType.CATEGORIES, '对话'])
     return new Set(JSON.parse(raw))
   } catch {
-    return new Set(window.OhMyType.CATEGORIES)
+    return new Set([...window.OhMyType.CATEGORIES, '对话'])
   }
 }
 
