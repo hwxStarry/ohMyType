@@ -94,8 +94,18 @@ let durationTimer = 0
 let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
 const completionAudio = createCompletionAudio()
 
-if (localStorage.getItem(SIDEBAR_KEY) !== '0') {
+applyDefaultUiMigration()
+
+if (localStorage.getItem(SIDEBAR_KEY) === '1') {
   el.appShell.classList.add('sidebar-collapsed')
+}
+
+function applyDefaultUiMigration() {
+  const versionKey = 'ohmytype_ui_defaults_v2'
+  if (localStorage.getItem(versionKey) === '1') return
+  localStorage.setItem(SIDEBAR_KEY, '0')
+  writeOpenCategories(new Set([DIALOGUE_ROOT_CATEGORY]))
+  localStorage.setItem(versionKey, '1')
 }
 
 function getInitialActiveId() {

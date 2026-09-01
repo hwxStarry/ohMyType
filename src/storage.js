@@ -25,10 +25,10 @@ function writeCustomContents(items) {
 function readOpenCategories() {
   try {
     const raw = localStorage.getItem(window.OhMyType.CATEGORY_KEY)
-    if (!raw) return new Set([...window.OhMyType.CATEGORIES, '对话'])
+    if (!raw) return new Set(['对话'])
     return new Set(JSON.parse(raw))
   } catch {
-    return new Set([...window.OhMyType.CATEGORIES, '对话'])
+    return new Set(['对话'])
   }
 }
 
