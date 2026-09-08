@@ -1,7 +1,7 @@
 {
   "name": "Oh My Type",
   "short_name": "Oh My Type",
-  "description": "面向拼音、诗词、文章、文言文和单词的本地优先打字练习页面。",
+  "description": "免费在线打字练习页面，支持中文打字、拼音打字、诗词打字、文言文打字、英文单词、老板对话和打字游戏练习。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
