@@ -6,11 +6,13 @@ const {
   MODE_KEY,
   PRACTICE_MODES,
   SIDEBAR_KEY,
+  branchingStories,
   completionSounds,
   createCompletionAudio,
   createTypingState,
   defaultContents,
   escapeHtml,
+  funModes,
   games,
   getPinyin,
   getWordTranslations,
@@ -46,6 +48,9 @@ const el = {
   editButton: qs('#editButton'),
   editorDialog: qs('#editorDialog'),
   expectedInfo: qs('#expectedInfo'),
+  funContent: qs('#funContent'),
+  funModesTab: qs('#funModesTab'),
+  funView: qs('#funView'),
   gameLinks: qs('#gameLinks'),
   gamesCount: qs('#gamesCount'),
   gamesTab: qs('#gamesTab'),
@@ -77,6 +82,7 @@ const el = {
   soundDialog: qs('#soundDialog'),
   soundPreset: qs('#soundPreset'),
   soundUrl: qs('#soundUrl'),
+  storyTab: qs('#storyTab'),
   textSection: qs('#textSection'),
   testSound: qs('#testSound'),
   typingInput: qs('#typingInput'),
@@ -88,17 +94,29 @@ const el = {
 
 const DIALOGUE_ROOT_CATEGORY = '对话'
 const DIALOGUE_CATEGORY_PREFIX = '对话·'
+const REVIEW_MASTERY_TARGET = 3
+const WEAK_REVIEW_ID = 'generated-weak-review'
+const MISTAKE_REVIEW_ID = 'generated-mistake-review'
 let activeId = getInitialActiveId()
 let activeView = 'practice'
 let durationTimer = 0
 let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
+let activeStory = branchingStories[0]
+let storyNodeId = activeStory.start
+let storyPath = []
+let expandedSectionsBeforeCollapse = null
 const completionAudio = createCompletionAudio()
 
 applyDefaultUiMigration()
 
 if (localStorage.getItem(SIDEBAR_KEY) === '1') {
   el.appShell.classList.add('sidebar-collapsed')
+  expandedSectionsBeforeCollapse = new Set()
+  document.querySelectorAll('.side-section[data-side-section]').forEach(section => {
+    section.open = true
+  })
 }
+applyResponsiveSidebarDefaults()
 
 function applyDefaultUiMigration() {
   const versionKey = 'ohmytype_ui_defaults_v2'
@@ -106,6 +124,19 @@ function applyDefaultUiMigration() {
   localStorage.setItem(SIDEBAR_KEY, '0')
   writeOpenCategories(new Set([DIALOGUE_ROOT_CATEGORY]))
   localStorage.setItem(versionKey, '1')
+}
+
+function applyResponsiveSidebarDefaults() {
+  if (!window.matchMedia('(max-width: 980px)').matches || el.appShell.classList.contains('sidebar-collapsed')) return
+  document.querySelectorAll('.side-section[data-side-section]').forEach(section => {
+    section.open = false
+  })
+}
+
+function closeMobileSidebar() {
+  if (window.matchMedia('(max-width: 980px)').matches) {
+    el.appShell.classList.remove('sidebar-open')
+  }
 }
 
 function getInitialActiveId() {
@@ -118,6 +149,16 @@ function getInitialActiveId() {
 
 function getContents() {
   return [...defaultContents, ...readCustomContents()]
+}
+
+function getWeakMistakeEntries() {
+  return Object.entries(readMistakes())
+    .filter(([, record]) => record.errors > 0 && record.correctReviews < REVIEW_MASTERY_TARGET)
+    .sort((a, b) => {
+      const scoreDifference = (b[1].errors - b[1].correctReviews) - (a[1].errors - a[1].correctReviews)
+      if (scoreDifference) return scoreDifference
+      return String(b[1].lastMistakeAt).localeCompare(String(a[1].lastMistakeAt))
+    })
 }
 
 function getActiveContent() {
@@ -197,6 +238,10 @@ function handleTypingValue(value) {
       return char !== targetChars[index]
     })
     if (hasWrongNewChar) {
+      nextChars.slice(previousLength).forEach((char, offset) => {
+        const index = previousLength + offset
+        if (char !== targetChars[index]) typing.recordRejectedAttempt(targetChars[index] || '')
+      })
       el.typingInput.value = typing.typedValue
       return
     }
@@ -225,7 +270,12 @@ function renderContentList() {
   const openCategories = readOpenCategories()
   el.gamesCount.textContent = String(games.length)
   el.historyCount.textContent = String(readPracticeHistory().length)
-  el.mistakeCount.textContent = String(Object.keys(readMistakes()).length)
+  const weakMistakes = getWeakMistakeEntries()
+  el.mistakeCount.textContent = String(weakMistakes.length)
+  el.weakReviewTab.disabled = weakMistakes.length === 0
+  el.weakReviewTab.title = weakMistakes.length
+    ? `还有 ${weakMistakes.length} 个弱项，每个连续复习 ${REVIEW_MASTERY_TARGET} 次后掌握`
+    : '暂无需要复习的弱项'
   const regularGroups = CATEGORIES.filter(category => !category.startsWith(DIALOGUE_CATEGORY_PREFIX)).map(category => ({
     category,
     items: contents.filter(item => item.category === category)
@@ -243,6 +293,8 @@ function renderContentList() {
   bindContentListEvents()
   el.gamesTab.classList.toggle('active', activeView === 'games')
   el.historyTab.classList.toggle('active', activeView === 'history')
+  el.storyTab.classList.toggle('active', activeView === 'story')
+  el.funModesTab.classList.toggle('active', activeView === 'fun')
 }
 
 function renderCategoryGroup(group, openCategories) {
@@ -301,7 +353,7 @@ function renderContentItem(item) {
     <button class="content-item ${item.id === activeId && activeView === 'practice' ? 'active' : ''}" type="button" data-id="${item.id}">
       <span class="content-main">
         <strong>${escapeHtml(item.title)}</strong>
-        ${item.isCustom ? `
+        ${item.isCustom && !item.isGenerated ? `
           <span class="content-actions">
             <span class="edit-content" role="button" tabindex="0" data-edit-id="${item.id}" aria-label="编辑 ${escapeHtml(item.title)}" title="编辑">✎</span>
             <span class="delete-content" role="button" tabindex="0" data-delete-id="${item.id}" aria-label="删除 ${escapeHtml(item.title)}" title="删除">×</span>
@@ -353,6 +405,7 @@ function selectContent(id) {
   typing.reset()
   resetTextScroll()
   render()
+  closeMobileSidebar()
   focusTypingInput(true)
 }
 
@@ -586,6 +639,8 @@ function renderPractice() {
   el.practiceView.hidden = false
   el.gamesView.hidden = true
   el.historyView.hidden = true
+  el.funView.hidden = true
+  setPracticeControlsVisible(true)
   el.currentCategory.textContent = active.category
   el.currentTitle.textContent = active.title
   updatePracticeDisplay()
@@ -597,6 +652,8 @@ function renderGames() {
   el.practiceView.hidden = true
   el.gamesView.hidden = false
   el.historyView.hidden = true
+  el.funView.hidden = true
+  setPracticeControlsVisible(false)
   el.currentCategory.textContent = '游戏'
   el.currentTitle.textContent = '打字游戏'
   el.gameLinks.innerHTML = gameGroups.map(group => {
@@ -649,6 +706,8 @@ function renderHistory() {
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = false
+  el.funView.hidden = true
+  setPracticeControlsVisible(false)
   el.currentCategory.textContent = '记录'
   el.currentTitle.textContent = '练习历史'
   el.historySummary.innerHTML = `
@@ -672,15 +731,148 @@ function renderHistory() {
       </div>
       <span>WPM ${Number(item.wpm) || 0}</span>
       <span>准确率 ${Number(item.accuracy) || 0}%</span>
+      <span>字符 ${Number(item.totalChars) || 0}${item.targetChars && item.targetChars !== item.totalChars ? `/${Number(item.targetChars)}` : ''}</span>
       <span>错误 ${Number(item.errors) || 0}</span>
     </article>
   `).join('')
+}
+
+function setPracticeControlsVisible(visible) {
+  el.practiceMode.hidden = !visible
+  el.editButton.hidden = !visible
+  el.soundButton.hidden = !visible
+  el.resetButton.hidden = !visible && activeView !== 'story'
+}
+
+function renderFunHub() {
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = false
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '趣味'
+  el.currentTitle.textContent = '全部玩法'
+  el.funContent.innerHTML = `
+    <div class="fun-head">
+      <p class="eyebrow">输入也可以有剧情</p>
+      <h2>趣味练习</h2>
+      <p>不只是抄完一段文字，每种玩法都会让输入产生不同的结果。</p>
+    </div>
+    <div class="fun-grid">
+      ${funModes.map(mode => `
+        <article class="fun-mode-card ${mode.status === 'soon' ? 'soon' : ''}">
+          <span class="fun-mode-icon">${escapeHtml(mode.icon)}</span>
+          <div>
+            <span class="fun-status">${mode.status === 'playable' ? '现在可玩' : '即将上线'}</span>
+            <h3>${escapeHtml(mode.title)}</h3>
+            <p>${escapeHtml(mode.description)}</p>
+          </div>
+          ${mode.status === 'playable'
+            ? `<button class="solid-button" type="button" data-start-fun="${escapeHtml(mode.id)}">开始挑战</button>`
+            : '<span class="fun-coming">正在准备</span>'}
+        </article>
+      `).join('')}
+    </div>
+  `
+}
+
+function renderStory() {
+  const node = activeStory.nodes[storyNodeId]
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = false
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '剧情分支'
+  el.currentTitle.textContent = activeStory.title
+
+  if (node.ending) {
+    el.funContent.innerHTML = `
+      <div class="story-shell ending-shell">
+        <p class="eyebrow">故事完成 · ${storyPath.length} 次选择</p>
+        <div class="ending-mark">★</div>
+        <h2>${escapeHtml(node.ending.title)}</h2>
+        <p>${escapeHtml(node.ending.body)}</p>
+        <div class="story-actions">
+          <button class="soft-button" type="button" data-open-fun-hub>返回全部玩法</button>
+          <button class="solid-button" type="button" data-restart-story>再玩一次</button>
+        </div>
+      </div>
+    `
+    return
+  }
+
+  el.funContent.innerHTML = `
+    <div class="story-shell">
+      <div class="story-progress">
+        <span>剧情进度</span>
+        <strong>${storyPath.length + 1} / 2</strong>
+      </div>
+      <p class="story-scene">${escapeHtml(node.scene)}</p>
+      <section class="story-message">
+        <span class="dialogue-avatar">员</span>
+        <div>
+          <small>${escapeHtml(node.speaker)}</small>
+          <p>${escapeHtml(node.message)}</p>
+        </div>
+      </section>
+      <div class="story-prompt">
+        <h2>选择一句，完整输入</h2>
+        <div class="story-choices">
+          ${node.choices.map((choice, index) => `
+            <div class="story-choice" data-choice="${escapeHtml(choice.text)}">
+              <span>${index + 1}</span>
+              <p>${escapeHtml(choice.text)}</p>
+            </div>
+          `).join('')}
+        </div>
+        <label class="story-input-wrap">
+          <span>你的回复</span>
+          <textarea id="storyInput" rows="2" autocomplete="off" placeholder="在这里输入你选择的完整句子…"></textarea>
+          <small id="storyInputHint">输入任意一个选项即可推进剧情</small>
+        </label>
+      </div>
+    </div>
+  `
+  requestAnimationFrame(() => qs('#storyInput', el.funContent)?.focus())
+}
+
+function startStory() {
+  activeStory = branchingStories[0]
+  storyNodeId = activeStory.start
+  storyPath = []
+  activeView = 'story'
+  render()
+}
+
+function handleStoryInput(input) {
+  const node = activeStory.nodes[storyNodeId]
+  if (!node || node.ending) return
+  const value = input.value
+  const matchingChoices = node.choices.filter(choice => choice.text.startsWith(value))
+  el.funContent.querySelectorAll('.story-choice').forEach(choiceEl => {
+    const matches = value && choiceEl.dataset.choice.startsWith(value)
+    choiceEl.classList.toggle('matching', Boolean(matches))
+  })
+  input.classList.toggle('wrong', value.length > 0 && matchingChoices.length === 0)
+  const hint = qs('#storyInputHint', el.funContent)
+  hint.textContent = matchingChoices.length || !value
+    ? '继续输入，完整匹配后会自动进入下一段剧情'
+    : '这段输入与两个选项都不匹配，可以退格修正'
+  const selected = node.choices.find(choice => choice.text === value)
+  if (!selected) return
+  storyPath.push({ nodeId: storyNodeId, choice: selected.text })
+  storyNodeId = selected.next
+  completionAudio.play()
+  render()
 }
 
 function render() {
   renderContentList()
   if (activeView === 'games') renderGames()
   else if (activeView === 'history') renderHistory()
+  else if (activeView === 'fun') renderFunHub()
+  else if (activeView === 'story') renderStory()
   else renderPractice()
 }
 
@@ -792,50 +984,75 @@ function showResult() {
   el.resultAccuracy.textContent = `${stats.accuracy}%`
   el.resultCpm.textContent = String(stats.cpm)
   el.resultDuration.textContent = `${stats.durationSeconds}s`
-  el.resultMeta.textContent = `总字符 ${Array.from(getCompareText()).length} · 错误 ${stats.errors}`
+  const targetLength = Array.from(getCompareText()).length
+  el.resultMeta.textContent = `已输入 ${stats.typedLength} / ${targetLength} 字符 · 错误按键 ${stats.errors}`
   el.reviewMistakesButton.hidden = stats.errors <= 0
   el.resultModal.hidden = false
 }
 
 function createMistakeReview() {
   el.resultModal.hidden = true
-  const reviewText = [...typing.mistakeChars].join('')
-  if (!reviewText) return
-  const customItems = readCustomContents()
-  const item = {
-    id: `review-${Date.now()}`,
-    title: '错字复习',
-    category: '文章',
-    isCustom: true,
-    body: reviewText
-  }
-  customItems.unshift(item)
-  writeCustomContents(customItems)
-  activeId = item.id
-  activeView = 'practice'
-  localStorage.setItem(ACTIVE_KEY, activeId)
-  typing.reset()
-  resetTextScroll()
-  render()
+  const mistakeChars = [...typing.mistakeChars]
+  if (!mistakeChars.length) return
+  startGeneratedReview({
+    id: MISTAKE_REVIEW_ID,
+    title: '本次错项复习',
+    chars: mistakeChars,
+    preferredContent: getActiveContent()
+  })
 }
 
 function startWeakReview() {
-  const mistakeChars = Object.entries(readMistakes())
-    .sort((a, b) => b[1] - a[1])
+  const mistakeChars = getWeakMistakeEntries()
     .map(([char]) => char)
-    .filter(Boolean)
     .slice(0, 40)
   if (!mistakeChars.length) return
 
-  const body = mistakeChars.join('')
+  closeMobileSidebar()
+  startGeneratedReview({ id: WEAK_REVIEW_ID, title: '弱项复习', chars: mistakeChars })
+}
+
+function buildReviewBody(chars, preferredContent) {
+  const sourceContents = [
+    ...(preferredContent ? [preferredContent] : []),
+    ...getContents()
+  ].filter((item, index, items) => (
+    !item.isGenerated && items.findIndex(candidate => candidate.id === item.id) === index
+  ))
+  const onlyLatin = chars.every(char => /^[a-z]$/i.test(char))
+  const snippets = []
+
+  chars.forEach(char => {
+    const candidates = sourceContents.flatMap(item => {
+      if (onlyLatin) return item.body.match(/[a-z]+/gi) || []
+      return item.body.match(/[^\u3002！？!?\n]+[\u3002！？!?]?/g) || []
+    }).filter(text => text.includes(char))
+      .sort((a, b) => a.length - b.length)
+    const snippet = candidates.find(text => !snippets.includes(text))
+    if (snippet) snippets.push(snippet.trim())
+  })
+
+  const contextualBody = snippets.join(onlyLatin ? ' ' : '\n')
+  if (contextualBody) return Array.from(contextualBody).slice(0, MAX_CUSTOM_LENGTH).join('')
+  return chars.join(onlyLatin ? ' ' : '')
+}
+
+function startGeneratedReview({ id, title, chars, preferredContent }) {
+  const uniqueChars = [...new Set(chars)].filter(Boolean)
+  if (!uniqueChars.length) return
+
   const customItems = readCustomContents()
   const item = {
-    id: `weak-${Date.now()}`,
-    title: '弱项复习',
-    category: /^[a-zA-Z\s]+$/.test(body) ? '拼音' : '文章',
+    id,
+    title,
+    category: uniqueChars.every(char => /^[a-z]$/i.test(char)) ? '拼音' : '文章',
     isCustom: true,
-    body
+    isGenerated: true,
+    reviewCharacters: uniqueChars,
+    body: buildReviewBody(uniqueChars, preferredContent)
   }
+  const existingIndex = customItems.findIndex(content => content.id === id)
+  if (existingIndex >= 0) customItems.splice(existingIndex, 1)
   customItems.unshift(item)
   writeCustomContents(customItems)
   activeId = item.id
@@ -891,6 +1108,10 @@ function bindEvents() {
   el.textSection.addEventListener('focus', () => focusTypingInput(true))
 
   el.resetButton.addEventListener('click', () => {
+    if (activeView === 'story') {
+      startStory()
+      return
+    }
     activeView = 'practice'
     typing.reset()
     resetTextScroll()
@@ -923,10 +1144,32 @@ function bindEvents() {
   el.gamesTab.addEventListener('click', () => {
     activeView = 'games'
     render()
+    closeMobileSidebar()
+  })
+  el.funModesTab.addEventListener('click', () => {
+    activeView = 'fun'
+    render()
+    closeMobileSidebar()
+  })
+  el.storyTab.addEventListener('click', () => {
+    startStory()
+    closeMobileSidebar()
+  })
+  el.funContent.addEventListener('input', event => {
+    if (event.target.matches('#storyInput')) handleStoryInput(event.target)
+  })
+  el.funContent.addEventListener('click', event => {
+    if (event.target.closest('[data-start-fun="branching-story"]')) startStory()
+    if (event.target.closest('[data-restart-story]')) startStory()
+    if (event.target.closest('[data-open-fun-hub]')) {
+      activeView = 'fun'
+      render()
+    }
   })
   el.historyTab.addEventListener('click', () => {
     activeView = 'history'
     render()
+    closeMobileSidebar()
   })
   el.weakReviewTab.addEventListener('click', startWeakReview)
   el.practiceMode.addEventListener('change', () => {
@@ -942,6 +1185,20 @@ function bindEvents() {
   })
   el.sidebarToggle.addEventListener('click', () => {
     const collapsed = el.appShell.classList.toggle('sidebar-collapsed')
+    if (collapsed) {
+      expandedSectionsBeforeCollapse = new Set(
+        [...document.querySelectorAll('.side-section[data-side-section][open]')]
+          .map(section => section.dataset.sideSection)
+      )
+      document.querySelectorAll('.side-section[data-side-section]').forEach(section => {
+        section.open = true
+      })
+    } else if (expandedSectionsBeforeCollapse) {
+      document.querySelectorAll('.side-section[data-side-section]').forEach(section => {
+        section.open = expandedSectionsBeforeCollapse.has(section.dataset.sideSection)
+      })
+      expandedSectionsBeforeCollapse = null
+    }
     localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
     focusTypingInput(true)
   })

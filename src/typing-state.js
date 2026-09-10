@@ -7,7 +7,10 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
   let startTime = 0
   let endTime = 0
   let errors = 0
+  let attempts = 0
+  let correctAttempts = 0
   let mistakeChars = new Set()
+  let mistakeCounts = new Map()
   let typedValue = ''
 
   function getTypedChars() {
@@ -35,11 +38,12 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
     const typed = getTypedChars()
     const minutes = getDurationMs() / 60000
     const compareTo = getCompareChars()
-    const correct = typed.filter((char, index) => char === compareTo[index]).length
-    const accuracy = typed.length === 0 ? 100 : Math.round((correct / typed.length) * 100)
+    const accuracy = attempts === 0 ? 100 : Math.round((correctAttempts / attempts) * 100)
 
     return {
       accuracy,
+      attempts,
+      correctAttempts,
       cpm: minutes > 0 ? Math.round(typed.length / minutes) : 0,
       duration: startTime ? getDurationSeconds() : 0,
       durationSeconds: getDurationSeconds(),
@@ -54,6 +58,7 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
   function addMistake(char) {
     if (char && char !== ' ' && char !== '\n') {
       mistakeChars.add(char)
+      mistakeCounts.set(char, (mistakeCounts.get(char) || 0) + 1)
     }
   }
 
@@ -63,12 +68,15 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
     isRunning = false
     endTime = Date.now()
     inputEl.disabled = true
+    const compareTo = getCompareChars()
+    const correctChars = new Set(getTypedChars().filter((char, index) => char === compareTo[index]))
     window.OhMyType.savePracticeRecord({
       active: getActiveContent(),
       stats: getStats(),
-      totalChars: getTargetChars().length,
+      targetChars: getTargetChars().length,
       errors,
-      mistakeChars
+      correctChars,
+      mistakeCounts
     })
     onChange()
     onFinish({ mistakeChars: new Set(mistakeChars), stats: getStats() })
@@ -92,17 +100,30 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
 
     if (nextValue.length > previous.length) {
       for (let i = previous.length; i < typed.length; i++) {
+        attempts++
         if (typed[i] !== compareTo[i]) {
           errors++
           addMistake(compareTo[i] ?? '')
+        } else {
+          correctAttempts++
         }
       }
-    } else if (nextValue.length < previous.length) {
-      errors = typed.filter((char, index) => char !== compareTo[index]).length
     }
 
     onChange()
     if (typed.length >= targetLength) finish()
+  }
+
+  function recordRejectedAttempt(expectedChar) {
+    if (isFinished) return
+    if (!isRunning) {
+      isRunning = true
+      startTime = Date.now()
+    }
+    attempts++
+    errors++
+    addMistake(expectedChar)
+    onChange()
   }
 
   function reset() {
@@ -114,7 +135,10 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
     startTime = 0
     endTime = 0
     errors = 0
+    attempts = 0
+    correctAttempts = 0
     mistakeChars = new Set()
+    mistakeCounts = new Map()
     onChange()
   }
 
@@ -131,6 +155,7 @@ function createTypingState({ getActiveContent, getCompareText, inputEl, onChange
     getStats,
     getTypedChars,
     handleValue,
+    recordRejectedAttempt,
     finishNow: finish,
     reset
   }

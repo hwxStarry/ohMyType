@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="./styles/topbar.css" />
     <link rel="stylesheet" href="./styles/practice.css" />
     <link rel="stylesheet" href="./styles/games.css" />
+    <link rel="stylesheet" href="./styles/fun.css" />
     <link rel="stylesheet" href="./styles/history.css" />
     <link rel="stylesheet" href="./styles/dialogs.css" />
     <link rel="stylesheet" href="./styles/responsive.css" />
@@ -41,17 +42,37 @@
           <button id="sidebarToggle" class="side-toggle" type="button" aria-label="收起侧边栏" title="收起侧边栏">‹</button>
         </div>
 
-        <div class="side-section">
-          <div class="side-title">练习内容</div>
+        <details class="side-section" data-side-section="content">
+          <summary class="side-title">练习内容</summary>
           <div id="contentList" class="content-list"></div>
-        </div>
+        </details>
 
-        <div class="side-section">
-          <div class="side-title">栏目</div>
-          <button id="gamesTab" class="side-action" type="button">
-            <span>打字游戏</span>
-            <span id="gamesCount" class="count">0</span>
+        <details class="side-section" data-side-section="fun">
+          <summary class="side-title">趣味练习</summary>
+          <button id="storyTab" class="side-action" type="button">
+            <span>剧情分支</span>
+            <span class="count">玩</span>
           </button>
+          <button class="side-action" type="button" disabled title="即将上线">
+            <span>侦探解谜</span>
+            <span class="count">即将</span>
+          </button>
+          <button class="side-action" type="button" disabled title="即将上线">
+            <span>记忆闪打</span>
+            <span class="count">即将</span>
+          </button>
+          <button class="side-action" type="button" disabled title="即将上线">
+            <span>成语接龙</span>
+            <span class="count">即将</span>
+          </button>
+          <button id="funModesTab" class="side-action" type="button">
+            <span>全部玩法</span>
+            <span class="count">4</span>
+          </button>
+        </details>
+
+        <details class="side-section" data-side-section="personal">
+          <summary class="side-title">我的练习</summary>
           <button id="weakReviewTab" class="side-action" type="button">
             <span>弱项复习</span>
             <span id="mistakeCount" class="count">0</span>
@@ -60,7 +81,15 @@
             <span>练习历史</span>
             <span id="historyCount" class="count">0</span>
           </button>
-        </div>
+        </details>
+
+        <details class="side-section" data-side-section="discover">
+          <summary class="side-title">发现</summary>
+          <button id="gamesTab" class="side-action" type="button">
+            <span>打字游戏</span>
+            <span id="gamesCount" class="count">0</span>
+          </button>
+        </details>
 
         <div class="side-footer">
           <a href="https://github.com/hwxStarry/ohMyType" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -138,6 +167,10 @@
             <p>按竞速、射击防守、格斗、儿童轻量和游戏合集分类，优先放可以直接开始玩的打字游戏。</p>
           </div>
           <div id="gameLinks" class="game-groups"></div>
+        </section>
+
+        <section id="funView" class="fun-view" hidden>
+          <div id="funContent"></div>
         </section>
 
         <section id="historyView" class="history-view" hidden>
@@ -255,6 +288,7 @@
     <script src="./src/pinyin.js"></script>
     <script src="./src/constants.js"></script>
     <script src="./src/data.js"></script>
+    <script src="./src/fun-data.js"></script>
     <script src="./src/utils.js"></script>
     <script src="./src/annotations.js"></script>
     <script src="./src/storage.js"></script>

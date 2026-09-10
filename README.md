@@ -7,6 +7,8 @@ Oh My Type 是一个面向诗词、文章、拼音、单词和对话的打字练
 
 在线体验：[https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 
+后续功能和已确认的迭代方向见 [ROADMAP.md](./ROADMAP.md)。
+
 ## 适合
 
 - 拼音、键位和英文单词的日常练习。
@@ -22,12 +24,13 @@ Oh My Type 是一个面向诗词、文章、拼音、单词和对话的打字练
 - 隐藏输入框捕获键盘输入，练习区实时标记正确、错误和当前位置。
 - 拼音练习使用无声调字母输入，并绕过中文输入法干扰。
 - 对话练习以老板为用户角色，包含工作管理、客户沟通、面试问答、日常聊天和客服售后等场景。
+- 趣味练习提供独立玩法入口，剧情分支可通过完整输入不同回复推动故事并解锁不同结局。
 - 实时统计 WPM、准确率、用时和进度。
 - 虚拟键盘高亮下一键。
 - 支持自由练习、限时、限字和错字阻止等练习模式。
 - 自定义练习内容，可选择分类、编辑、删除，并保存到 `localStorage`。
-- 完成后显示成绩，并记录错字和练习历史到 `localStorage`。
-- 弱项复习会根据历史错字生成新的练习内容。
+- 完成后显示成绩，并按实际按键尝试记录错字和练习历史到 `localStorage`。
+- 弱项复习会优先生成包含错字的原词或原句，连续正确练习后自动标记为已掌握。
 - 打字游戏栏目收集可直接体验的练习页面，部分项目提供源码入口。
 - 内置多种按键反馈音效，也支持自定义在线音频。
 
@@ -67,6 +70,7 @@ http://localhost:8080
 │   ├── annotations.js  # 拼音和单词标注
 │   ├── constants.js    # 常量、localStorage key、分类、键盘布局
 │   ├── data.js         # 默认内容和游戏链接数据
+│   ├── fun-data.js     # 趣味玩法和分支剧情数据
 │   ├── keyboard.js     # 虚拟键盘渲染
 │   ├── pinyin.js       # 拼音转换库
 │   ├── sounds.js       # 完成音效设置和播放
@@ -80,6 +84,7 @@ http://localhost:8080
     ├── topbar.css
     ├── practice.css
     ├── games.css
+    ├── fun.css
     ├── history.css
     ├── dialogs.css
     └── responsive.css
@@ -107,6 +112,14 @@ http://localhost:8080
 - `typestart_history`：练习历史。
 - `typestart_mistakes`：错字统计。
 - `ohmytype_completion_sound`：完成音效设置。
+
+## 测试
+
+```bash
+node tests/typing-state.test.js
+node tests/storage.test.js
+node tests/fun-data.test.js
+```
 
 ## 许可
 

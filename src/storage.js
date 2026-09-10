@@ -46,18 +46,43 @@ function readPracticeHistory() {
 
 function readMistakes() {
   try {
-    return JSON.parse(localStorage.getItem(window.OhMyType.MISTAKE_KEY) || '{}')
+    const stored = JSON.parse(localStorage.getItem(window.OhMyType.MISTAKE_KEY) || '{}')
+    return Object.fromEntries(Object.entries(stored).map(([char, value]) => {
+      if (typeof value === 'number') {
+        return [char, { errors: value, correctReviews: 0, lastMistakeAt: '', lastReviewedAt: '' }]
+      }
+      return [char, {
+        errors: Math.max(0, Number(value?.errors) || 0),
+        correctReviews: Math.max(0, Number(value?.correctReviews) || 0),
+        lastMistakeAt: value?.lastMistakeAt || '',
+        lastReviewedAt: value?.lastReviewedAt || ''
+      }]
+    }))
   } catch {
     return {}
   }
 }
 
-function savePracticeRecord({ active, stats, totalChars, errors, mistakeChars }) {
+function savePracticeRecord({ active, stats, targetChars, errors, correctChars, mistakeCounts }) {
   try {
-    const allMistakes = JSON.parse(localStorage.getItem(window.OhMyType.MISTAKE_KEY) || '{}')
-    mistakeChars.forEach(char => {
-      allMistakes[char] = (allMistakes[char] || 0) + 1
+    const now = new Date().toISOString()
+    const allMistakes = readMistakes()
+    mistakeCounts.forEach((count, char) => {
+      const record = allMistakes[char] || { errors: 0, correctReviews: 0, lastMistakeAt: '', lastReviewedAt: '' }
+      record.errors += count
+      record.correctReviews = 0
+      record.lastMistakeAt = now
+      allMistakes[char] = record
     })
+
+    if (Array.isArray(active.reviewCharacters)) {
+      active.reviewCharacters.forEach(char => {
+        const record = allMistakes[char]
+        if (!record || mistakeCounts.has(char) || !correctChars.has(char)) return
+        record.correctReviews += 1
+        record.lastReviewedAt = now
+      })
+    }
     localStorage.setItem(window.OhMyType.MISTAKE_KEY, JSON.stringify(allMistakes))
 
     const history = readPracticeHistory()
@@ -69,9 +94,11 @@ function savePracticeRecord({ active, stats, totalChars, errors, mistakeChars })
       cpm: stats.cpm,
       accuracy: stats.accuracy,
       duration: stats.durationSeconds,
-      totalChars,
+      totalChars: stats.typedLength,
+      targetChars,
       errors,
-      mistakes: JSON.stringify([...mistakeChars])
+      attempts: stats.attempts,
+      mistakes: JSON.stringify([...mistakeCounts.keys()])
     })
     if (history.length > 100) history.shift()
     localStorage.setItem(window.OhMyType.HISTORY_KEY, JSON.stringify(history))

@@ -7,6 +7,8 @@ Oh My Type is a typing practice page for poems, articles, pinyin, vocabulary dri
 
 Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 
+Planned features and confirmed product directions are tracked in [ROADMAP.md](./ROADMAP.md).
+
 ## Good For
 
 - Daily practice for pinyin, keyboard positions, and English words.
@@ -22,12 +24,13 @@ Live demo: [https://ohmytype.mozhe.cc/](https://ohmytype.mozhe.cc/)
 - Hidden input capture with live correct, incorrect, and current-character highlighting.
 - Plain pinyin input without tone marks, with input-method-safe key capture.
 - Dialogue practice uses the boss as the user role, with scenarios for management, clients, interviews, daily chat, and support.
+- Fun practice has a dedicated section; branching stories advance when the player fully types a chosen reply and can end in different outcomes.
 - Live WPM, accuracy, elapsed time, and progress statistics.
 - Virtual keyboard with next-key highlighting.
 - Practice modes for free typing, timed sessions, character limits, and strict blocking.
 - Custom practice text with category selection, edit, delete, and `localStorage` persistence.
-- Completion result modal with mistakes and practice history saved locally.
-- Weak review can generate a new practice item from locally recorded mistakes.
+- Completion results and history based on actual key attempts, including corrected mistakes.
+- Weak review uses contextual words or sentences and retires items after repeated correct reviews.
 - Typing game section with directly playable practice pages, plus source links where available.
 - Built-in feedback sounds with support for a custom online audio URL.
 
@@ -67,6 +70,7 @@ http://localhost:8080
 │   ├── annotations.js  # Pinyin and word annotations
 │   ├── constants.js    # Constants, localStorage keys, categories, keyboard layout
 │   ├── data.js         # Built-in content and game links
+│   ├── fun-data.js     # Fun modes and branching story data
 │   ├── keyboard.js     # Virtual keyboard rendering
 │   ├── pinyin.js       # Pinyin conversion library
 │   ├── sounds.js       # Completion sound settings and playback
@@ -80,6 +84,7 @@ http://localhost:8080
     ├── topbar.css
     ├── practice.css
     ├── games.css
+    ├── fun.css
     ├── history.css
     ├── dialogs.css
     └── responsive.css
@@ -107,6 +112,14 @@ The app uses these `localStorage` keys:
 - `typestart_history`: practice history.
 - `typestart_mistakes`: mistake statistics.
 - `ohmytype_completion_sound`: completion sound settings.
+
+## Tests
+
+```bash
+node tests/typing-state.test.js
+node tests/storage.test.js
+node tests/fun-data.test.js
+```
 
 ## License
 
