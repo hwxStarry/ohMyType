@@ -9,6 +9,25 @@ const { branchingStories, funModes } = context.window.OhMyType
 assert.ok(funModes.some(mode => mode.id === 'branching-story' && mode.status === 'playable'))
 assert.ok(branchingStories.length > 0)
 
+const { detectiveCases } = context.window.OhMyType
+assert.ok(Array.isArray(detectiveCases) && detectiveCases.length === 1)
+assert.ok(funModes.some(mode => mode.id === 'detective' && mode.status === 'playable'))
+
+detectiveCases.forEach(caseItem => {
+  assert.ok(caseItem.id && caseItem.title && caseItem.description)
+  assert.ok(caseItem.statements.length >= 3)
+  caseItem.statements.forEach(statement => {
+    assert.ok(statement.speaker && statement.role)
+    assert.ok(statement.text.length >= 20)
+    assert.ok(statement.clue.length >= 8)
+  })
+  assert.ok(caseItem.question)
+  assert.ok(caseItem.acceptedAnswers.length >= 2)
+  assert.ok(caseItem.acceptedAnswers.every(Boolean))
+  assert.ok(caseItem.wrongHint)
+  assert.ok(caseItem.result.title && caseItem.result.reasoning && caseItem.result.closing)
+})
+
 branchingStories.forEach(story => {
   assert.ok(story.nodes[story.start], `${story.id} 缺少起始节点`)
   const visited = new Set()

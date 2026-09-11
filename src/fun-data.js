@@ -14,7 +14,7 @@ const funModes = [
     icon: '⌕',
     title: '侦探解谜',
     description: '输入证词收集线索，从矛盾中找出真相。',
-    status: 'soon'
+    status: 'playable'
   },
   {
     id: 'memory',
@@ -82,6 +82,42 @@ const branchingStories = [
   }
 ]
 
-Object.assign(window.OhMyType, { branchingStories, funModes })
+const detectiveCases = [
+  {
+    id: 'rain-gallery-theft',
+    title: '雨夜画廊失窃案',
+    description: '闭馆后的画廊停电数分钟，一幅小画从上锁展柜中消失。找出说谎的人和进入密室的证据。',
+    statements: [
+      {
+        speaker: '周明',
+        role: '保安',
+        text: '晚上十点二十分画廊突然停电，我立刻把展厅门锁上，并把展柜钥匙封进值班室的信封。直到电力恢复，信封一直没有拆封。',
+        clue: '展柜钥匙始终封存，没人能从外面打开展柜。'
+      },
+      {
+        speaker: '林夏',
+        role: '策展人',
+        text: '停电时我在走廊等候，房间里一片漆黑。电力恢复前我进过展厅，还检查过画框旁的地面，确认那里当时是干的。',
+        clue: '策展人声称在停电未恢复、展厅漆黑且上锁时检查过干燥地面。'
+      },
+      {
+        speaker: '陈姨',
+        role: '清洁员',
+        text: '停电时我一直在后门清点拖把，没有进展厅。电力恢复后我才跟着保安进去，发现画框旁只在室内留下了一圈雨水。',
+        clue: '清洁员证实雨水只在上锁展厅内出现，恢复供电后才有人能看见。'
+      }
+    ],
+    question: '谁最可能是偷画的人，或者哪条关键证据能证明作案者进入过锁着的展厅？',
+    acceptedAnswers: ['林夏', '展柜钥匙始终封存'],
+    wrongHint: '再对照钥匙封存、房门上锁和雨水出现的时间，看看谁的证词不可能成立。',
+    result: {
+      title: '结案：雨夜里的破绽',
+      reasoning: '钥匙一直封存，展厅在停电时上锁且漆黑，没人能从外面打开展厅。林夏却声称自己在断电、房门无法进入时检查过干燥地面；而雨水只出现在锁着的室内，这个时间与位置矛盾暴露了她。',
+      closing: '林夏承认自己带着备用钥匙进过展厅，雨水正是她留下的脚印。失窃的小画最终在她的画筒夹层中被找回。'
+    }
+  }
+]
+
+Object.assign(window.OhMyType, { branchingStories, detectiveCases, funModes })
 
 })()
