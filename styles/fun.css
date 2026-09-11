@@ -227,6 +227,38 @@
   color: var(--zinc-500);
 }
 
+.fun-keyboard-card {
+  margin-top: 20px;
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(24, 26, 32, 0.72);
+}
+
+.fun-keyboard-toggle {
+  width: 100%;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  background: transparent;
+  color: var(--zinc-200);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+
+.fun-keyboard-toggle span:last-child {
+  color: var(--zinc-400);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.fun-keyboard-toggle[aria-expanded="false"] + .virtual-keyboard {
+  display: none;
+}
+
 .ending-shell {
   max-width: 660px;
   padding-top: min(12vh, 100px);
@@ -283,5 +315,15 @@
 
   .story-actions {
     display: grid;
+  }
+}
+
+@media (max-width: 980px) {
+  .fun-keyboard-card {
+    padding: 12px;
+  }
+
+  .fun-keyboard-toggle[aria-expanded="false"] + .virtual-keyboard {
+    display: none;
   }
 }

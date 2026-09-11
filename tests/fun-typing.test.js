@@ -30,4 +30,8 @@ assert.equal(completed.completedIndex, 0)
 
 const unicode = getFunTypingState(['去看𠮷'], '去看')
 assert.equal(unicode.candidates[0].chars[2].char, '𠮷')
+
+const { getDefaultFunKeyboardOpen } = context.window.OhMyType
+assert.equal(getDefaultFunKeyboardOpen(1200), true)
+assert.equal(getDefaultFunKeyboardOpen(980), false)
 console.log('fun-typing tests passed')

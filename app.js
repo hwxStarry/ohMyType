@@ -12,6 +12,8 @@ const {
   createTypingState,
   defaultContents,
   escapeHtml,
+  getDefaultFunKeyboardOpen,
+  getFunTypingState,
   funModes,
   games,
   getPinyin,
@@ -105,6 +107,8 @@ let activeStory = branchingStories[0]
 let storyNodeId = activeStory.start
 let storyPath = []
 let expandedSectionsBeforeCollapse = null
+let funKeyboardOpen = getDefaultFunKeyboardOpen(window.innerWidth)
+let funKeyboardNextChars = []
 const completionAudio = createCompletionAudio()
 
 applyDefaultUiMigration()
@@ -832,9 +836,33 @@ function renderStory() {
           <small id="storyInputHint">输入任意一个选项即可推进剧情</small>
         </label>
       </div>
+      <section class="fun-keyboard-card">
+        <button class="fun-keyboard-toggle" type="button" data-toggle-fun-keyboard aria-expanded="${funKeyboardOpen}">
+          <span>键盘指法</span><span>${funKeyboardOpen ? '收起键盘' : '展开键盘'}</span>
+        </button>
+        <div id="funKeyboard" class="virtual-keyboard"></div>
+      </section>
     </div>
   `
+  renderFunKeyboard(getFunTypingState(node.choices.map(choice => choice.text), '').nextChars)
   requestAnimationFrame(() => qs('#storyInput', el.funContent)?.focus())
+}
+
+function renderFunKeyboard(nextChars) {
+  const keyboard = qs('#funKeyboard', el.funContent)
+  const toggle = qs('[data-toggle-fun-keyboard]', el.funContent)
+  if (!keyboard || !toggle) return
+
+  funKeyboardNextChars = nextChars.filter(char => !/[\u4e00-\u9fff]/.test(char))
+  toggle.setAttribute('aria-expanded', String(funKeyboardOpen))
+  toggle.querySelector('span:last-child').textContent = funKeyboardOpen ? '收起键盘' : '展开键盘'
+  keyboard.hidden = !funKeyboardOpen
+  renderKeyboard(keyboard, funKeyboardNextChars)
+}
+
+function toggleFunKeyboard() {
+  funKeyboardOpen = !funKeyboardOpen
+  renderFunKeyboard(funKeyboardNextChars)
 }
 
 function startStory() {
@@ -849,6 +877,8 @@ function handleStoryInput(input) {
   const node = activeStory.nodes[storyNodeId]
   if (!node || node.ending) return
   const value = input.value
+  const typingState = getFunTypingState(node.choices.map(choice => choice.text), value)
+  renderFunKeyboard(typingState.nextChars)
   const matchingChoices = node.choices.filter(choice => choice.text.startsWith(value))
   el.funContent.querySelectorAll('.story-choice').forEach(choiceEl => {
     const matches = value && choiceEl.dataset.choice.startsWith(value)
@@ -1159,6 +1189,7 @@ function bindEvents() {
     if (event.target.matches('#storyInput')) handleStoryInput(event.target)
   })
   el.funContent.addEventListener('click', event => {
+    if (event.target.closest('[data-toggle-fun-keyboard]')) toggleFunKeyboard()
     if (event.target.closest('[data-start-fun="branching-story"]')) startStory()
     if (event.target.closest('[data-restart-story]')) startStory()
     if (event.target.closest('[data-open-fun-hub]')) {
@@ -1224,6 +1255,8 @@ function bindEvents() {
   })
   el.reviewMistakesButton.addEventListener('click', createMistakeReview)
 }
+
+Object.assign(window.OhMyType, { renderFunKeyboard, toggleFunKeyboard })
 
 bindEvents()
 render()

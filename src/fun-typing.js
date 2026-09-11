@@ -36,5 +36,9 @@
     return { typedValue, completedIndex, bestIndexes, nextChars, candidates: candidateStates }
   }
 
-  Object.assign(window.OhMyType, { getFunTypingState })
+  function getDefaultFunKeyboardOpen(viewportWidth) {
+    return viewportWidth > 980
+  }
+
+  Object.assign(window.OhMyType, { getDefaultFunKeyboardOpen, getFunTypingState })
 })()

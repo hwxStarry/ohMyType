@@ -43,13 +43,14 @@ function keyMatchesExpected(key, expected) {
 }
 
 function renderKeyboard(container, expected) {
+  const expectedKeys = Array.isArray(expected) ? expected : [expected]
   container.innerHTML = window.OhMyType.keyboardRows.map(row => `
     <div class="key-row">
       ${row.map(key => {
         const classes = ['key']
         if (window.OhMyType.homeKeys.has(key.toLowerCase())) classes.push('home')
         if (window.OhMyType.dotKeys.has(key.toLowerCase())) classes.push('dot')
-        if (keyMatchesExpected(key, expected)) classes.push('expected')
+        if (expectedKeys.some(value => keyMatchesExpected(key, value))) classes.push('expected')
         if (key === 'Space') classes.push('space')
         if (['Backspace', 'Caps', 'Enter', 'Shift'].includes(key)) classes.push('extra-wide')
         else if (key === 'Tab') classes.push('wide')
