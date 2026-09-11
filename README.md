@@ -24,7 +24,9 @@ Oh My Type 是一个面向诗词、文章、拼音、单词和对话的打字练
 - 隐藏输入框捕获键盘输入，练习区实时标记正确、错误和当前位置。
 - 拼音练习使用无声调字母输入，并绕过中文输入法干扰。
 - 对话练习以老板为用户角色，包含工作管理、客户沟通、面试问答、日常聊天和客服售后等场景。
-- 趣味练习提供独立玩法入口，剧情分支可通过完整输入不同回复推动故事并解锁不同结局。
+- 趣味练习提供独立玩法入口；剧情分支通过直接逐字输入回复推进故事，并实时高亮正确、错误和待输入的字符。
+- 剧情分支和侦探解谜共用可展开的响应式键盘：桌面默认展开，小屏默认收起，且会高亮下一步可输入的按键。
+- 内置一个可玩的侦探案件《雨夜画廊失窃案》：完整输入证词收集线索，再指认真相。
 - 实时统计 WPM、准确率、用时和进度。
 - 虚拟键盘高亮下一键。
 - 支持自由练习、限时、限字和错字阻止等练习模式。
@@ -71,6 +73,7 @@ http://localhost:8080
 │   ├── constants.js    # 常量、localStorage key、分类、键盘布局
 │   ├── data.js         # 默认内容和游戏链接数据
 │   ├── fun-data.js     # 趣味玩法和分支剧情数据
+│   ├── fun-typing.js   # 趣味玩法的逐字输入、候选和下一键状态
 │   ├── keyboard.js     # 虚拟键盘渲染
 │   ├── pinyin.js       # 拼音转换库
 │   ├── sounds.js       # 完成音效设置和播放
@@ -119,6 +122,9 @@ http://localhost:8080
 node tests/typing-state.test.js
 node tests/storage.test.js
 node tests/fun-data.test.js
+node tests/fun-typing.test.js
+node tests/keyboard.test.js
+node tests/detective-state.test.js
 ```
 
 ## 许可

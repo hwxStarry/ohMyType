@@ -24,7 +24,9 @@ Planned features and confirmed product directions are tracked in [ROADMAP.md](./
 - Hidden input capture with live correct, incorrect, and current-character highlighting.
 - Plain pinyin input without tone marks, with input-method-safe key capture.
 - Dialogue practice uses the boss as the user role, with scenarios for management, clients, interviews, daily chat, and support.
-- Fun practice has a dedicated section; branching stories advance when the player fully types a chosen reply and can end in different outcomes.
+- Fun practice has a dedicated section; branching stories advance through direct character-by-character reply input, with live correct, incorrect, and pending-character highlighting.
+- Branching stories and detective practice share an expandable responsive keyboard: it is open by default on desktop, closed by default on smaller screens, and highlights possible next keys.
+- One playable detective case, “Rainy Night Gallery Theft,” has players type statements to unlock clues before making an accusation.
 - Live WPM, accuracy, elapsed time, and progress statistics.
 - Virtual keyboard with next-key highlighting.
 - Practice modes for free typing, timed sessions, character limits, and strict blocking.
@@ -71,6 +73,7 @@ http://localhost:8080
 │   ├── constants.js    # Constants, localStorage keys, categories, keyboard layout
 │   ├── data.js         # Built-in content and game links
 │   ├── fun-data.js     # Fun modes and branching story data
+│   ├── fun-typing.js   # Character input, candidates, and next-key state for fun modes
 │   ├── keyboard.js     # Virtual keyboard rendering
 │   ├── pinyin.js       # Pinyin conversion library
 │   ├── sounds.js       # Completion sound settings and playback
@@ -119,6 +122,9 @@ The app uses these `localStorage` keys:
 node tests/typing-state.test.js
 node tests/storage.test.js
 node tests/fun-data.test.js
+node tests/fun-typing.test.js
+node tests/keyboard.test.js
+node tests/detective-state.test.js
 ```
 
 ## License
