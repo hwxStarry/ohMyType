@@ -193,38 +193,36 @@
   color: #dbeafe;
 }
 
-.story-input-wrap {
-  display: grid;
-  gap: 7px;
-  margin-top: 16px;
-  color: var(--zinc-400);
-  font-size: 12px;
+.story-choice.dimmed {
+  opacity: 0.48;
 }
 
-.story-input-wrap textarea {
-  width: 100%;
-  border: 1px solid var(--card-line);
-  border-radius: 10px;
-  outline: none;
-  resize: none;
-  padding: 12px 14px;
-  background: #181a20;
+.fun-char {
+  border-radius: 4px;
+  transition: color 80ms ease, background 80ms ease;
+}
+
+.fun-char.pending {
+  color: inherit;
+}
+
+.fun-char.current {
   color: #fff;
-  font-size: 17px;
-  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.story-input-wrap textarea:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+.fun-char.correct {
+  color: #4ade80;
 }
 
-.story-input-wrap textarea.wrong {
-  border-color: var(--red);
+.fun-char.wrong {
+  color: var(--red);
 }
 
-.story-input-wrap small {
+.fun-typing-hint {
+  margin-top: 16px;
   color: var(--zinc-500);
+  font-size: 12px;
 }
 
 .fun-keyboard-card {

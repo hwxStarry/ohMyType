@@ -110,6 +110,8 @@ let storyPath = []
 let expandedSectionsBeforeCollapse = null
 let funKeyboardOpen = getDefaultFunKeyboardOpen(window.innerWidth)
 let funKeyboardNextChars = []
+let funTypedValue = ''
+let funCandidates = []
 const completionAudio = createCompletionAudio()
 
 applyDefaultUiMigration()
@@ -807,6 +809,8 @@ function renderStory() {
     return
   }
 
+  const typingState = getFunTypingState(funCandidates, funTypedValue)
+
   el.funContent.innerHTML = `
     <div class="story-shell">
       <div class="story-progress">
@@ -825,17 +829,14 @@ function renderStory() {
         <h2>选择一句，完整输入</h2>
         <div class="story-choices">
           ${node.choices.map((choice, index) => `
-            <div class="story-choice" data-choice="${escapeHtml(choice.text)}">
+            <div class="story-choice ${typingState.candidates[index].isBest ? 'matching' : ''} ${funTypedValue && !typingState.candidates[index].isBest ? 'dimmed' : ''}" data-choice="${escapeHtml(choice.text)}">
               <span>${index + 1}</span>
-              <p>${escapeHtml(choice.text)}</p>
+              <p>${renderFunCharacters(typingState.candidates[index])}</p>
             </div>
           `).join('')}
         </div>
-        <label class="story-input-wrap">
-          <span>你的回复</span>
-          <textarea id="storyInput" rows="2" autocomplete="off" placeholder="在这里输入你选择的完整句子…"></textarea>
-          <small id="storyInputHint">输入任意一个选项即可推进剧情</small>
-        </label>
+        <p id="funTypingHint" class="fun-typing-hint" aria-live="polite">直接输入你选择的回复</p>
+        <textarea id="funTypingInput" class="hidden-input" aria-label="输入选择的回复"></textarea>
       </div>
       <section class="fun-keyboard-card">
         <button class="fun-keyboard-toggle" type="button" data-toggle-fun-keyboard aria-expanded="${funKeyboardOpen}">
@@ -845,8 +846,29 @@ function renderStory() {
       </section>
     </div>
   `
-  renderFunKeyboard(getFunTypingState(node.choices.map(choice => choice.text), '').nextChars)
-  requestAnimationFrame(() => qs('#storyInput', el.funContent)?.focus())
+  renderFunKeyboard(typingState.nextChars)
+  requestAnimationFrame(() => qs('#funTypingInput', el.funContent)?.focus({ preventScroll: true }))
+}
+
+function resetFunInput(candidates) {
+  funTypedValue = ''
+  funCandidates = candidates
+}
+
+function renderFunCharacters(candidate) {
+  return candidate.chars.map(item =>
+    `<span class="fun-char ${item.status}">${escapeHtml(item.char)}</span>`
+  ).join('')
+}
+
+function handleFunInput(value) {
+  const input = qs('#funTypingInput', el.funContent)
+  if (input?.dataset.composing === '1') return getFunTypingState(funCandidates, funTypedValue)
+  const typingState = getFunTypingState(funCandidates, value)
+  funTypedValue = typingState.typedValue
+  if (input && input.value !== funTypedValue) input.value = funTypedValue
+  renderFunKeyboard(typingState.nextChars)
+  return typingState
 }
 
 function renderFunKeyboard(nextChars) {
@@ -870,6 +892,7 @@ function startStory() {
   activeStory = branchingStories[0]
   storyNodeId = activeStory.start
   storyPath = []
+  resetFunInput(activeStory.nodes[storyNodeId].choices.map(choice => choice.text))
   activeView = 'story'
   render()
 }
@@ -877,23 +900,24 @@ function startStory() {
 function handleStoryInput(input) {
   const node = activeStory.nodes[storyNodeId]
   if (!node || node.ending) return
-  const value = input.value
-  const typingState = getFunTypingState(node.choices.map(choice => choice.text), value)
-  renderFunKeyboard(typingState.nextChars)
-  const matchingChoices = node.choices.filter(choice => choice.text.startsWith(value))
-  el.funContent.querySelectorAll('.story-choice').forEach(choiceEl => {
-    const matches = value && choiceEl.dataset.choice.startsWith(value)
-    choiceEl.classList.toggle('matching', Boolean(matches))
+  const typingState = handleFunInput(input.value)
+  el.funContent.querySelectorAll('.story-choice').forEach((choiceEl, index) => {
+    const candidate = typingState.candidates[index]
+    choiceEl.classList.toggle('matching', candidate.isBest)
+    choiceEl.classList.toggle('dimmed', Boolean(funTypedValue) && !candidate.isBest)
+    choiceEl.querySelector('p').innerHTML = renderFunCharacters(candidate)
   })
-  input.classList.toggle('wrong', value.length > 0 && matchingChoices.length === 0)
-  const hint = qs('#storyInputHint', el.funContent)
-  hint.textContent = matchingChoices.length || !value
+  const hasPrefixMatch = typingState.candidates.some(candidate => candidate.text.startsWith(funTypedValue))
+  const hint = qs('#funTypingHint', el.funContent)
+  hint.textContent = hasPrefixMatch || !funTypedValue
     ? '继续输入，完整匹配后会自动进入下一段剧情'
     : '这段输入与两个选项都不匹配，可以退格修正'
-  const selected = node.choices.find(choice => choice.text === value)
-  if (!selected) return
+  if (typingState.completedIndex < 0) return
+  const selected = node.choices[typingState.completedIndex]
   storyPath.push({ nodeId: storyNodeId, choice: selected.text })
   storyNodeId = selected.next
+  const nextNode = activeStory.nodes[storyNodeId]
+  resetFunInput(nextNode.ending ? [] : nextNode.choices.map(choice => choice.text))
   completionAudio.play()
   render()
 }
@@ -1187,7 +1211,15 @@ function bindEvents() {
     closeMobileSidebar()
   })
   el.funContent.addEventListener('input', event => {
-    if (event.target.matches('#storyInput')) handleStoryInput(event.target)
+    if (event.target.matches('#funTypingInput') && event.target.dataset.composing !== '1') handleStoryInput(event.target)
+  })
+  el.funContent.addEventListener('compositionstart', event => {
+    if (event.target.matches('#funTypingInput')) event.target.dataset.composing = '1'
+  })
+  el.funContent.addEventListener('compositionend', event => {
+    if (!event.target.matches('#funTypingInput')) return
+    event.target.dataset.composing = ''
+    handleStoryInput(event.target)
   })
   el.funContent.addEventListener('click', event => {
     if (event.target.closest('[data-toggle-fun-keyboard]')) toggleFunKeyboard()
@@ -1197,6 +1229,7 @@ function bindEvents() {
       activeView = 'fun'
       render()
     }
+    if (event.target.closest('.story-shell')) qs('#funTypingInput', el.funContent)?.focus({ preventScroll: true })
   })
   el.historyTab.addEventListener('click', () => {
     activeView = 'history'

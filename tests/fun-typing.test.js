@@ -37,4 +37,11 @@ assert.equal(getDefaultFunKeyboardOpen(980), false)
 
 const { getFunKeyboardKeys } = context.window.OhMyType
 assert.deepEqual(Array.from(getFunKeyboardKeys(['a', '中', '𠮷', '!'])), ['a', '!'])
+
+const shared = getFunTypingState(['我们去左边', '我们去右边'], '我们去')
+assert.deepEqual(Array.from(shared.bestIndexes), [0, 1])
+assert.deepEqual(Array.from(shared.nextChars), ['左', '右'])
+
+const limited = getFunTypingState(['短句'], '短句多余内容')
+assert.equal(limited.typedValue, '短句')
 console.log('fun-typing tests passed')
