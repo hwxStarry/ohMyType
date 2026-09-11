@@ -9,8 +9,10 @@ const {
   branchingStories,
   completionSounds,
   createCompletionAudio,
+  createDetectiveState,
   createTypingState,
   defaultContents,
+  detectiveCases,
   escapeHtml,
   getDefaultFunKeyboardOpen,
   getFunKeyboardKeys,
@@ -47,6 +49,7 @@ const el = {
   customCounter: qs('#customCounter'),
   customText: qs('#customText'),
   customTitle: qs('#customTitle'),
+  detectiveTab: qs('#detectiveTab'),
   duration: qs('#duration'),
   editButton: qs('#editButton'),
   editorDialog: qs('#editorDialog'),
@@ -107,6 +110,8 @@ let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
 let activeStory = branchingStories[0]
 let storyNodeId = activeStory.start
 let storyPath = []
+let activeDetectiveCase = detectiveCases[0]
+let detectiveState = createDetectiveState(activeDetectiveCase)
 let expandedSectionsBeforeCollapse = null
 let funKeyboardOpen = getDefaultFunKeyboardOpen(window.innerWidth)
 let funKeyboardNextChars = []
@@ -301,6 +306,7 @@ function renderContentList() {
   el.gamesTab.classList.toggle('active', activeView === 'games')
   el.historyTab.classList.toggle('active', activeView === 'history')
   el.storyTab.classList.toggle('active', activeView === 'story')
+  el.detectiveTab.classList.toggle('active', activeView === 'detective')
   el.funModesTab.classList.toggle('active', activeView === 'fun')
 }
 
@@ -748,7 +754,7 @@ function setPracticeControlsVisible(visible) {
   el.practiceMode.hidden = !visible
   el.editButton.hidden = !visible
   el.soundButton.hidden = !visible
-  el.resetButton.hidden = !visible && activeView !== 'story'
+  el.resetButton.hidden = !visible && !['story', 'detective'].includes(activeView)
 }
 
 function renderFunHub() {
@@ -835,15 +841,8 @@ function renderStory() {
             </div>
           `).join('')}
         </div>
-        <p id="funTypingHint" class="fun-typing-hint" aria-live="polite">直接输入你选择的回复</p>
-        <textarea id="funTypingInput" class="hidden-input" aria-label="输入选择的回复"></textarea>
       </div>
-      <section class="fun-keyboard-card">
-        <button class="fun-keyboard-toggle" type="button" data-toggle-fun-keyboard aria-expanded="${funKeyboardOpen}">
-          <span>键盘指法</span><span>${funKeyboardOpen ? '收起键盘' : '展开键盘'}</span>
-        </button>
-        <div id="funKeyboard" class="virtual-keyboard"></div>
-      </section>
+      ${renderFunInputControls('输入选择的回复', '直接输入你选择的回复')}
     </div>
   `
   renderFunKeyboard(typingState.nextChars)
@@ -853,6 +852,20 @@ function renderStory() {
 function resetFunInput(candidates) {
   funTypedValue = ''
   funCandidates = candidates
+  funKeyboardNextChars = []
+}
+
+function renderFunInputControls(label, hint) {
+  return `
+    <p id="funTypingHint" class="fun-typing-hint" aria-live="polite">${escapeHtml(hint)}</p>
+    <textarea id="funTypingInput" class="hidden-input" aria-label="${escapeHtml(label)}" autocomplete="off" autocapitalize="off" spellcheck="false">${escapeHtml(funTypedValue)}</textarea>
+    <section class="fun-keyboard-card">
+      <button class="fun-keyboard-toggle" type="button" data-toggle-fun-keyboard aria-expanded="${funKeyboardOpen}">
+        <span>键盘指法</span><span>${funKeyboardOpen ? '收起键盘' : '展开键盘'}</span>
+      </button>
+      <div id="funKeyboard" class="virtual-keyboard"></div>
+    </section>
+  `
 }
 
 function renderFunCharacters(candidate) {
@@ -864,7 +877,10 @@ function renderFunCharacters(candidate) {
 function handleFunInput(value) {
   const input = qs('#funTypingInput', el.funContent)
   if (input?.dataset.composing === '1') return getFunTypingState(funCandidates, funTypedValue)
-  const typingState = getFunTypingState(funCandidates, value)
+  // Free answers must never use accepted answers as typing or keyboard candidates.
+  const typingState = activeView === 'detective' && detectiveState.getState().phase === 'accusation'
+    ? { typedValue: value, nextChars: [], candidates: [], completedIndex: -1 }
+    : getFunTypingState(funCandidates, value)
   funTypedValue = typingState.typedValue
   if (input && input.value !== funTypedValue) input.value = funTypedValue
   renderFunKeyboard(typingState.nextChars)
@@ -897,10 +913,25 @@ function startStory() {
   render()
 }
 
-function handleStoryInput(input) {
+function updateFunInput(input) {
+  if (!['story', 'detective'].includes(activeView) || input.dataset.composing === '1') return
+  if (input !== qs('#funTypingInput', el.funContent)) return
+  const typingState = handleFunInput(input.value)
+  if (activeView === 'story') handleStoryInput(typingState)
+  else if (detectiveState.getState().phase === 'statement') {
+    qs('.statement-text', el.funContent).innerHTML = renderFunCharacters(typingState.candidates[0])
+    qs('#funTypingHint', el.funContent).textContent = typingState.candidates[0].chars.some(char => char.status === 'wrong')
+      ? '这段输入与证词不匹配，可以退格修正'
+      : '直接输入证词，完整匹配后解锁线索'
+    if (typingState.completedIndex === 0) completeDetectiveStatement()
+  } else if (detectiveState.getState().phase === 'accusation') {
+    qs('.accusation-answer', el.funContent).innerHTML = renderDetectiveAnswer()
+  }
+}
+
+function handleStoryInput(typingState) {
   const node = activeStory.nodes[storyNodeId]
   if (!node || node.ending) return
-  const typingState = handleFunInput(input.value)
   el.funContent.querySelectorAll('.story-choice').forEach((choiceEl, index) => {
     const candidate = typingState.candidates[index]
     choiceEl.classList.toggle('matching', candidate.isBest)
@@ -922,12 +953,125 @@ function handleStoryInput(input) {
   render()
 }
 
+function startDetective() {
+  detectiveState.reset()
+  resetFunInput([])
+  activeView = 'detective'
+  render()
+}
+
+function beginDetective() {
+  if (activeView !== 'detective' || detectiveState.getState().phase !== 'intro') return
+  detectiveState.start()
+  resetFunInput([activeDetectiveCase.statements[0].text])
+  render()
+}
+
+function completeDetectiveStatement() {
+  if (detectiveState.getState().phase !== 'statement') return
+  detectiveState.completeStatement()
+  const state = detectiveState.getState()
+  resetFunInput(state.phase === 'statement' ? [activeDetectiveCase.statements[state.statementIndex].text] : [])
+  completionAudio.play()
+  render()
+}
+
+function renderDetectiveAnswer() {
+  return renderFunCharacters({ chars: Array.from(funTypedValue, char => ({ char, status: 'pending' })) })
+}
+
+function submitDetectiveAnswer() {
+  const input = qs('#funTypingInput', el.funContent)
+  if (activeView !== 'detective' || detectiveState.getState().phase !== 'accusation' || input?.dataset.composing === '1') return
+  if (detectiveState.submitAnswer(funTypedValue)) completionAudio.play()
+  resetFunInput([])
+  render()
+}
+
+function renderDetective() {
+  const state = detectiveState.getState()
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = false
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '侦探解谜'
+  el.currentTitle.textContent = activeDetectiveCase.title
+
+  if (state.phase === 'intro') {
+    el.funContent.innerHTML = `
+      <div class="detective-shell case-intro">
+        <p class="eyebrow">案件档案 · ${activeDetectiveCase.statements.length} 份证词</p>
+        <h2>${escapeHtml(activeDetectiveCase.title)}</h2>
+        <p>${escapeHtml(activeDetectiveCase.description)}</p>
+        <p>完整输入每份证词，收集线索，再输入你的指认。</p>
+        <button class="solid-button" type="button" data-begin-detective>开始调查</button>
+      </div>
+    `
+    return
+  }
+  if (state.phase === 'result') {
+    el.funContent.innerHTML = `
+      <div class="detective-shell case-result">
+        <p class="eyebrow">调查完成</p>
+        <h2>${escapeHtml(activeDetectiveCase.result.title)}</h2>
+        <p>${escapeHtml(activeDetectiveCase.result.reasoning)}</p>
+        <p>${escapeHtml(activeDetectiveCase.result.closing)}</p>
+        <div class="story-actions">
+          <button class="soft-button" type="button" data-open-fun-hub>返回全部玩法</button>
+          <button class="solid-button" type="button" data-restart-detective>再查一次</button>
+        </div>
+      </div>
+    `
+    return
+  }
+
+  const statement = activeDetectiveCase.statements[state.statementIndex]
+  const typingState = getFunTypingState(funCandidates, funTypedValue)
+  el.funContent.innerHTML = `
+    <div class="detective-shell">
+      <div class="story-progress">
+        <span>${state.phase === 'statement' ? '调查证词' : '最终指认'}</span>
+        <strong>已解锁 ${state.clues.length} / ${activeDetectiveCase.statements.length} 条线索</strong>
+      </div>
+      ${state.phase === 'statement' ? `
+        <section class="statement-card">
+          <p class="eyebrow">证词 ${state.statementIndex + 1} · ${escapeHtml(statement.role)}</p>
+          <h2>${escapeHtml(statement.speaker)}</h2>
+          <p class="statement-text">${renderFunCharacters(typingState.candidates[0])}</p>
+        </section>
+      ` : ''}
+      ${state.clues.length ? `
+        <section class="clue-list" aria-label="已解锁线索">
+          ${state.clues.map((clue, index) => `
+            <article class="clue-card"><strong>线索 ${index + 1}</strong><p>${escapeHtml(clue)}</p></article>
+          `).join('')}
+        </section>
+      ` : ''}
+      ${state.phase === 'accusation' ? `
+        <section class="accusation-panel">
+          <h2>你的指认</h2>
+          <p>${escapeHtml(activeDetectiveCase.question)}</p>
+          <p class="accusation-answer" aria-label="已输入的指认">${renderDetectiveAnswer()}</p>
+          <button class="solid-button" type="button" data-submit-detective>确认指认</button>
+        </section>
+      ` : ''}
+      ${renderFunInputControls(state.phase === 'statement' ? '输入当前证词' : '输入你的指认',
+        state.phase === 'statement' ? '直接输入证词，完整匹配后解锁线索'
+          : state.wrongAttempts ? activeDetectiveCase.wrongHint : '输入你的判断，按 Enter 或点击「确认指认」提交')}
+    </div>
+  `
+  renderFunKeyboard(state.phase === 'statement' ? typingState.nextChars : [])
+  requestAnimationFrame(() => qs('#funTypingInput', el.funContent)?.focus({ preventScroll: true }))
+}
+
 function render() {
   renderContentList()
   if (activeView === 'games') renderGames()
   else if (activeView === 'history') renderHistory()
   else if (activeView === 'fun') renderFunHub()
   else if (activeView === 'story') renderStory()
+  else if (activeView === 'detective') renderDetective()
   else renderPractice()
 }
 
@@ -1167,6 +1311,10 @@ function bindEvents() {
       startStory()
       return
     }
+    if (activeView === 'detective') {
+      startDetective()
+      return
+    }
     activeView = 'practice'
     typing.reset()
     resetTextScroll()
@@ -1210,8 +1358,12 @@ function bindEvents() {
     startStory()
     closeMobileSidebar()
   })
+  el.detectiveTab.addEventListener('click', () => {
+    startDetective()
+    closeMobileSidebar()
+  })
   el.funContent.addEventListener('input', event => {
-    if (event.target.matches('#funTypingInput') && event.target.dataset.composing !== '1') handleStoryInput(event.target)
+    if (event.target.matches('#funTypingInput') && event.target.dataset.composing !== '1') updateFunInput(event.target)
   })
   el.funContent.addEventListener('compositionstart', event => {
     if (event.target.matches('#funTypingInput')) event.target.dataset.composing = '1'
@@ -1219,17 +1371,28 @@ function bindEvents() {
   el.funContent.addEventListener('compositionend', event => {
     if (!event.target.matches('#funTypingInput')) return
     event.target.dataset.composing = ''
-    handleStoryInput(event.target)
+    updateFunInput(event.target)
+  })
+  el.funContent.addEventListener('keydown', event => {
+    if (!event.target.matches('#funTypingInput') || event.key !== 'Enter') return
+    if (event.isComposing || event.keyCode === 229 || event.target.dataset.composing === '1') return
+    if (activeView === 'detective' && detectiveState.getState().phase === 'accusation') {
+      event.preventDefault()
+      submitDetectiveAnswer()
+    }
   })
   el.funContent.addEventListener('click', event => {
     if (event.target.closest('[data-toggle-fun-keyboard]')) toggleFunKeyboard()
     if (event.target.closest('[data-start-fun="branching-story"]')) startStory()
     if (event.target.closest('[data-restart-story]')) startStory()
+    if (event.target.closest('[data-start-fun="detective"], [data-restart-detective]')) startDetective()
+    if (event.target.closest('[data-begin-detective]')) beginDetective()
+    if (event.target.closest('[data-submit-detective]')) submitDetectiveAnswer()
     if (event.target.closest('[data-open-fun-hub]')) {
       activeView = 'fun'
       render()
     }
-    if (event.target.closest('.story-shell')) qs('#funTypingInput', el.funContent)?.focus({ preventScroll: true })
+    if (event.target.closest('.story-shell, .detective-shell')) qs('#funTypingInput', el.funContent)?.focus({ preventScroll: true })
   })
   el.historyTab.addEventListener('click', () => {
     activeView = 'history'
