@@ -40,5 +40,9 @@
     return viewportWidth > 980
   }
 
-  Object.assign(window.OhMyType, { getDefaultFunKeyboardOpen, getFunTypingState })
+  function getFunKeyboardKeys(nextChars) {
+    return nextChars.filter(char => !/\p{Script=Han}/u.test(char))
+  }
+
+  Object.assign(window.OhMyType, { getDefaultFunKeyboardOpen, getFunKeyboardKeys, getFunTypingState })
 })()

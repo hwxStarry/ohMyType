@@ -34,4 +34,7 @@ assert.equal(unicode.candidates[0].chars[2].char, '𠮷')
 const { getDefaultFunKeyboardOpen } = context.window.OhMyType
 assert.equal(getDefaultFunKeyboardOpen(1200), true)
 assert.equal(getDefaultFunKeyboardOpen(980), false)
+
+const { getFunKeyboardKeys } = context.window.OhMyType
+assert.deepEqual(Array.from(getFunKeyboardKeys(['a', '中', '𠮷', '!'])), ['a', '!'])
 console.log('fun-typing tests passed')

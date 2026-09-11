@@ -13,6 +13,7 @@ const {
   defaultContents,
   escapeHtml,
   getDefaultFunKeyboardOpen,
+  getFunKeyboardKeys,
   getFunTypingState,
   funModes,
   games,
@@ -853,7 +854,7 @@ function renderFunKeyboard(nextChars) {
   const toggle = qs('[data-toggle-fun-keyboard]', el.funContent)
   if (!keyboard || !toggle) return
 
-  funKeyboardNextChars = nextChars.filter(char => !/[\u4e00-\u9fff]/.test(char))
+  funKeyboardNextChars = getFunKeyboardKeys(nextChars)
   toggle.setAttribute('aria-expanded', String(funKeyboardOpen))
   toggle.querySelector('span:last-child').textContent = funKeyboardOpen ? '收起键盘' : '展开键盘'
   keyboard.hidden = !funKeyboardOpen
