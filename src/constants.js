@@ -10,7 +10,7 @@ const CATEGORY_KEY = 'ohmytype_open_categories'
 const MODE_KEY = 'ohmytype_practice_mode'
 
 const MAX_CUSTOM_LENGTH = 745
-const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语', '对话·工作管理', '对话·客户沟通', '对话·面试问答', '对话·日常聊天', '对话·客服售后']
+const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语', '编程·JavaScript', '编程·Python', '编程·HTML', '编程·CSS', '对话·工作管理', '对话·客户沟通', '对话·面试问答', '对话·日常聊天', '对话·客服售后']
 const PRACTICE_MODES = [
   { id: 'free', title: '不限时不限字', description: '按当前内容完整练完，不限制时间和字数。' },
   { id: 'time-30', title: '30 秒限时', description: '输入开始后 30 秒自动结束。' },

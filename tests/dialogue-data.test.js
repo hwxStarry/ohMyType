@@ -35,4 +35,24 @@ for (const dialogue of dialogues) {
   }
 }
 
+const dailyDialogues = dialogues.filter(item => item.category === '对话·日常聊天')
+assert.ok(dailyDialogues.length >= 5, 'daily chat should cover several relationships')
+assert.ok(dailyDialogues.some(item => item.title.includes('朋友')))
+assert.ok(dailyDialogues.some(item => item.title.includes('闺蜜')))
+assert.ok(dailyDialogues.some(item => item.title.includes('情侣')))
+assert.ok(dailyDialogues.every(item => !item.title.includes('老板')))
+
+const clientDialogues = dialogues.filter(item => item.category === '对话·客户沟通')
+assert.ok(clientDialogues.length >= 5, 'client communication should provide several customer-service scenarios')
+assert.ok(clientDialogues.every(item => item.incomingRole === '客户' && item.replyRole === '客服'))
+
+const supportDialogues = dialogues.filter(item => item.category === '对话·客服售后')
+assert.ok(supportDialogues.length >= 5, 'after-sales support should provide several direct service scenarios')
+assert.ok(supportDialogues.every(item => item.incomingRole === '客户' && item.replyRole === '客服'))
+
+const interviewDialogues = dialogues.filter(item => item.category === '对话·面试问答')
+assert.ok(interviewDialogues.length >= 4)
+assert.ok(interviewDialogues.every(item => ['面试官', '候选人'].includes(item.incomingRole)))
+assert.ok(interviewDialogues.every(item => ['面试官', '候选人'].includes(item.replyRole)))
+
 console.log('dialogue-data tests passed')

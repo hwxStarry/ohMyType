@@ -19,11 +19,12 @@ Planned features and confirmed product directions are tracked in [ROADMAP.md](./
 
 ## Features
 
-- Built-in practice content for pinyin, poems, articles, word drills, and boss dialogue.
+- Twelve pinyin sets, twenty classical poems, fourteen themed vocabulary sets, plus 44 JavaScript, Python, HTML, and CSS terminology drills.
+- Programming content is grouped by language in the sidebar and gives every term a short Chinese explanation.
 - Category-based sidebar with expandable groups, dialogue scenario subgroups, and a collapsible layout.
 - Hidden input capture with live correct, incorrect, and current-character highlighting.
 - Plain pinyin input without tone marks, with input-method-safe key capture.
-- Dialogue practice uses the boss as the user role, with scenarios for management, clients, interviews, daily chat, and support.
+- Dialogue practice shows scenario-specific roles: boss and employee for management, customer and agent for service, interviewer and candidate for interviews, plus friends, best friends, same-gender friends, and couples for daily chat.
 - Fun practice has a dedicated section; branching stories advance through direct character-by-character reply input, with live correct, incorrect, and pending-character highlighting.
 - Branching stories and detective practice share an expandable responsive keyboard: it is open by default on desktop, closed by default on smaller screens, and highlights possible next keys.
 - One playable detective case, “Rainy Night Gallery Theft,” has players type statements to unlock clues before making an accusation.
@@ -32,6 +33,7 @@ Planned features and confirmed product directions are tracked in [ROADMAP.md](./
 - Practice modes for free typing, timed sessions, character limits, and strict blocking.
 - Custom practice text with category selection, edit, delete, and `localStorage` persistence.
 - Completion results and history based on actual key attempts, including corrected mistakes.
+- Result actions can review the current mistakes, retry the same content, or continue to the next item in the category.
 - Weak review uses contextual words or sentences and retires items after repeated correct reviews.
 - Typing game section with directly playable practice pages, plus source links where available.
 - Built-in feedback sounds with support for a custom online audio URL.
@@ -121,10 +123,13 @@ The app uses these `localStorage` keys:
 ```bash
 node tests/typing-state.test.js
 node tests/storage.test.js
+node tests/content-data.test.js
+node tests/dialogue-data.test.js
 node tests/fun-data.test.js
 node tests/fun-typing.test.js
 node tests/keyboard.test.js
 node tests/detective-state.test.js
+node tests/seo.test.js
 ```
 
 ## License

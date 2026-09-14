@@ -68,6 +68,7 @@ const el = {
   historyView: qs('#historyView'),
   mistakeCount: qs('#mistakeCount'),
   mobileSidebarToggle: qs('#mobileSidebarToggle'),
+  nextButton: qs('#nextButton'),
   positionInfo: qs('#positionInfo'),
   practiceView: qs('#practiceView'),
   practiceMode: qs('#practiceMode'),
@@ -100,6 +101,8 @@ const el = {
 
 const DIALOGUE_ROOT_CATEGORY = '对话'
 const DIALOGUE_CATEGORY_PREFIX = '对话·'
+const PROGRAMMING_ROOT_CATEGORY = '编程'
+const PROGRAMMING_CATEGORY_PREFIX = '编程·'
 const REVIEW_MASTERY_TARGET = 3
 const WEAK_REVIEW_ID = 'generated-weak-review'
 const MISTAKE_REVIEW_ID = 'generated-mistake-review'
@@ -187,6 +190,10 @@ function isChineseAnnotatedContent() {
 
 function isWordContent() {
   return getActiveContent().category === '单词'
+}
+
+function isProgrammingContent() {
+  return getActiveContent().category.startsWith(PROGRAMMING_CATEGORY_PREFIX)
 }
 
 function isDialogueContent() {
@@ -288,7 +295,9 @@ function renderContentList() {
   el.weakReviewTab.title = weakMistakes.length
     ? `还有 ${weakMistakes.length} 个弱项，每个连续复习 ${REVIEW_MASTERY_TARGET} 次后掌握`
     : '暂无需要复习的弱项'
-  const regularGroups = CATEGORIES.filter(category => !category.startsWith(DIALOGUE_CATEGORY_PREFIX)).map(category => ({
+  const regularGroups = CATEGORIES.filter(category => (
+    !category.startsWith(DIALOGUE_CATEGORY_PREFIX) && !category.startsWith(PROGRAMMING_CATEGORY_PREFIX)
+  )).map(category => ({
     category,
     items: contents.filter(item => item.category === category)
   })).filter(group => group.items.length > 0)
@@ -296,9 +305,14 @@ function renderContentList() {
     category,
     items: contents.filter(item => item.category === category)
   })).filter(group => group.items.length > 0)
+  const programmingGroups = CATEGORIES.filter(category => category.startsWith(PROGRAMMING_CATEGORY_PREFIX)).map(category => ({
+    category,
+    items: contents.filter(item => item.category === category)
+  })).filter(group => group.items.length > 0)
 
   el.contentList.innerHTML = [
     ...regularGroups.map(group => renderCategoryGroup(group, openCategories)),
+    renderProgrammingCategoryGroup(programmingGroups, openCategories),
     renderDialogueCategoryGroup(dialogueGroups, openCategories)
   ].filter(Boolean).join('')
 
@@ -308,6 +322,41 @@ function renderContentList() {
   el.storyTab.classList.toggle('active', activeView === 'story')
   el.detectiveTab.classList.toggle('active', activeView === 'detective')
   el.funModesTab.classList.toggle('active', activeView === 'fun')
+}
+
+function renderProgrammingCategoryGroup(groups, openCategories) {
+  if (!groups.length) return ''
+  const total = groups.reduce((sum, group) => sum + group.items.length, 0)
+  const isOpen = openCategories.has(PROGRAMMING_ROOT_CATEGORY)
+  return `
+    <section class="category-group programming-category-group">
+      <button class="category-toggle" type="button" data-category="${PROGRAMMING_ROOT_CATEGORY}" aria-expanded="${isOpen}">
+        <span>${isOpen ? '⌄' : '›'}</span>
+        <strong>${PROGRAMMING_ROOT_CATEGORY}</strong>
+        <small>${total}</small>
+      </button>
+      <div class="category-items dialogue-subgroups" ${isOpen ? '' : 'hidden'}>
+        ${groups.map(group => renderProgrammingSubgroup(group, openCategories)).join('')}
+      </div>
+    </section>
+  `
+}
+
+function renderProgrammingSubgroup(group, openCategories) {
+  const isOpen = openCategories.has(group.category)
+  const title = group.category.replace(PROGRAMMING_CATEGORY_PREFIX, '')
+  return `
+    <section class="category-subgroup">
+      <button class="category-toggle subcategory-toggle" type="button" data-category="${escapeHtml(group.category)}" aria-expanded="${isOpen}">
+        <span>${isOpen ? '⌄' : '›'}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <small>${group.items.length}</small>
+      </button>
+      <div class="category-items subcategory-items" ${isOpen ? '' : 'hidden'}>
+        ${group.items.map(item => renderContentItem(item)).join('')}
+      </div>
+    </section>
+  `
 }
 
 function renderCategoryGroup(group, openCategories) {
@@ -384,8 +433,22 @@ function bindContentListEvents() {
     button.addEventListener('click', () => {
       const category = button.dataset.category
       const nextOpen = readOpenCategories()
-      if (nextOpen.has(category)) nextOpen.delete(category)
-      else nextOpen.add(category)
+      if (nextOpen.has(category)) {
+        nextOpen.delete(category)
+        if (category === DIALOGUE_ROOT_CATEGORY) {
+          CATEGORIES.filter(item => item.startsWith(DIALOGUE_CATEGORY_PREFIX)).forEach(item => nextOpen.delete(item))
+        }
+        if (category === PROGRAMMING_ROOT_CATEGORY) {
+          CATEGORIES.filter(item => item.startsWith(PROGRAMMING_CATEGORY_PREFIX)).forEach(item => nextOpen.delete(item))
+        }
+      } else {
+        const rootCategory = category.startsWith(DIALOGUE_CATEGORY_PREFIX)
+          ? DIALOGUE_ROOT_CATEGORY
+          : (category.startsWith(PROGRAMMING_CATEGORY_PREFIX) ? PROGRAMMING_ROOT_CATEGORY : category)
+        nextOpen.clear()
+        nextOpen.add(rootCategory)
+        if (category !== rootCategory) nextOpen.add(category)
+      }
       writeOpenCategories(nextOpen)
       renderContentList()
     })
@@ -412,6 +475,7 @@ function bindActionButton(button, handler) {
 }
 
 function selectContent(id) {
+  el.resultModal.hidden = true
   activeView = 'practice'
   activeId = id
   localStorage.setItem(ACTIVE_KEY, activeId)
@@ -453,6 +517,7 @@ function editCustomContent(event, id) {
 
 function renderTypingText() {
   el.typingText.classList.toggle('dialogue-text', isDialogueContent())
+  el.typingText.classList.toggle('programming-text', isProgrammingContent())
 
   if (isDialogueContent()) {
     renderDialogueBlocks()
@@ -461,6 +526,11 @@ function renderTypingText() {
 
   if (isWordContent()) {
     renderWordBlocks()
+    return
+  }
+
+  if (isProgrammingContent()) {
+    renderProgrammingBlocks()
     return
   }
 
@@ -553,6 +623,36 @@ function renderWordBlocks() {
   }).join('')
 }
 
+function renderProgrammingBlocks() {
+  const item = getActiveContent()
+  const words = getCompareText().match(/\S+/g) || []
+  const typedChars = typing.getTypedChars()
+  const translations = item.translations || []
+  let startIndex = 0
+
+  el.typingText.innerHTML = words.map((word, wordIndex) => {
+    const letters = Array.from(word)
+    const isCurrent = letters.some((letter, letterIndex) => (
+      getStatusClass(letter, startIndex + letterIndex, typedChars) === 'current'
+    ))
+    const main = letters.map((letter, letterIndex) => (
+      `<span class="${getCharClass(letter, startIndex + letterIndex, typedChars)}">${escapeHtml(letter)}</span>`
+    )).join('')
+    const spacerIndex = startIndex + letters.length
+    const spacer = wordIndex < words.length - 1
+      ? `<span class="${getCharClass(' ', spacerIndex, typedChars)} code-space">&nbsp;</span>`
+      : ''
+    startIndex += letters.length + (wordIndex < words.length - 1 ? 1 : 0)
+
+    return `
+      <span class="code-token${isCurrent ? ' current' : ''}">
+        <span class="code-token-main">${main}</span>
+        <span class="annotation-bottom">${escapeHtml(translations[wordIndex] || '')}</span>
+      </span>${spacer}
+    `
+  }).join('')
+}
+
 function getDialogueSegments(item) {
   let startIndex = 0
   return item.messages.map((message, index) => {
@@ -589,16 +689,18 @@ function renderDialogueBlocks() {
       <section class="dialogue-turn${isCurrent ? ' current' : ''}">
         ${segmentIndex === 1 ? '<div class="dialogue-time">今天 14:30</div>' : ''}
         <div class="dialogue-row incoming">
-          <span class="dialogue-avatar">员</span>
+          <span class="dialogue-avatar">${escapeHtml(item.incomingRole?.slice(0, 1) || '对')}</span>
           <div class="dialogue-bubble">
+            <small class="dialogue-speaker">${escapeHtml(item.incomingRole || '对方')}</small>
             <p>${escapeHtml(segment.incoming)}</p>
           </div>
         </div>
         <div class="dialogue-row reply">
           <div class="dialogue-bubble">
+            <small class="dialogue-speaker">${escapeHtml(item.replyRole || '我')}</small>
             <p>${replyHtml}${newlineHtml}</p>
           </div>
-          <span class="dialogue-avatar">板</span>
+          <span class="dialogue-avatar">${escapeHtml(item.replyRole?.slice(0, 1) || '我')}</span>
         </div>
       </section>
     `
@@ -1185,8 +1287,34 @@ function showResult() {
   el.resultDuration.textContent = `${stats.durationSeconds}s`
   const targetLength = Array.from(getCompareText()).length
   el.resultMeta.textContent = `已输入 ${stats.typedLength} / ${targetLength} 字符 · 错误按键 ${stats.errors}`
-  el.reviewMistakesButton.hidden = stats.errors <= 0
+  el.reviewMistakesButton.hidden = typing.mistakeChars.size === 0
   el.resultModal.hidden = false
+}
+
+function restartCurrentPractice() {
+  el.resultModal.hidden = true
+  typing.reset()
+  resetTextScroll()
+  render()
+  focusTypingInput(true)
+}
+
+function startNextPractice() {
+  const active = getActiveContent()
+  const candidates = getContents().filter(item => item.category === active.category && !item.isGenerated)
+  const currentIndex = candidates.findIndex(item => item.id === active.id)
+  const next = candidates[(currentIndex + 1) % candidates.length]
+
+  el.resultModal.hidden = true
+  if (next) {
+    activeId = next.id
+    localStorage.setItem(ACTIVE_KEY, activeId)
+  }
+  activeView = 'practice'
+  typing.reset()
+  resetTextScroll()
+  render()
+  focusTypingInput(true)
 }
 
 function createMistakeReview() {
@@ -1239,12 +1367,15 @@ function buildReviewBody(chars, preferredContent) {
 function startGeneratedReview({ id, title, chars, preferredContent }) {
   const uniqueChars = [...new Set(chars)].filter(Boolean)
   if (!uniqueChars.length) return
+  const reviewCategory = preferredContent && CATEGORIES.includes(preferredContent.category)
+    ? preferredContent.category
+    : (uniqueChars.every(char => /^[a-z]$/i.test(char)) ? '拼音' : '文章')
 
   const customItems = readCustomContents()
   const item = {
     id,
     title,
-    category: uniqueChars.every(char => /^[a-z]$/i.test(char)) ? '拼音' : '文章',
+    category: reviewCategory,
     isCustom: true,
     isGenerated: true,
     reviewCharacters: uniqueChars,
@@ -1265,6 +1396,17 @@ function startGeneratedReview({ id, title, chars, preferredContent }) {
 
 function bindEvents() {
   renderPracticeModeOptions()
+
+  document.querySelectorAll('.side-section > summary').forEach(summary => {
+    summary.addEventListener('click', () => {
+      if (el.appShell.classList.contains('sidebar-collapsed')) return
+      const currentSection = summary.parentElement
+      if (currentSection.open) return
+      document.querySelectorAll('.side-section[open]').forEach(section => {
+        if (section !== currentSection) section.open = false
+      })
+    })
+  })
 
   el.typingInput.addEventListener('input', () => {
     if (el.typingInput.dataset.composing === '1') return
@@ -1445,11 +1587,9 @@ function bindEvents() {
   })
 
   el.againButton.addEventListener('click', () => {
-    typing.reset()
-    resetTextScroll()
-    render()
-    focusTypingInput(true)
+    restartCurrentPractice()
   })
+  el.nextButton.addEventListener('click', startNextPractice)
   el.reviewMistakesButton.addEventListener('click', createMistakeReview)
 }
 

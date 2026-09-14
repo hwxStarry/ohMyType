@@ -1,14 +1,33 @@
 (() => {
 window.OhMyType = window.OhMyType || {}
 
-function makeDialogueContent({ id, title, category, messages }) {
+function makeDialogueContent({ id, title, category, incomingRole = '员工', replyRole = '老板', messages }) {
   return {
     id,
     title,
     category,
+    incomingRole,
+    replyRole,
     body: messages.map(message => message.reply).join('\n'),
     messages
   }
+}
+
+function makeProgrammingContent({ id, title, language, items }) {
+  return {
+    id,
+    title,
+    category: `编程·${language}`,
+    body: items.map(([name]) => name).join(' '),
+    translations: items.map(([, description]) => description)
+  }
+}
+
+function makeDialogueScenario({ pairs, ...options }) {
+  return makeDialogueContent({
+    ...options,
+    messages: pairs.map(([incoming, reply]) => ({ incoming, reply }))
+  })
 }
 
 const defaultContents = [
@@ -31,6 +50,60 @@ const defaultContents = [
     body: 'a o e i u v ai ei ui ao ou iu ie ve er\nan en in un vn ang eng ing ong'
   },
   {
+    id: 'pinyin-whole-syllables',
+    title: '整体认读音节',
+    category: '拼音',
+    body: 'zhi chi shi ri zi ci si yi wu yu\nye yue yuan yin yun ying'
+  },
+  {
+    id: 'pinyin-bpmf',
+    title: '声母组合：b p m f',
+    category: '拼音',
+    body: 'ba bai ban bang bao bei ben beng bi bian biao bie bin bing bo bu\npa pai pan pang pao pei pen peng pi pian piao pie pin ping po pu\nma mai man mang mao mei men meng mi mian miao mie min ming mo mou mu\nfa fan fang fei fen feng fo fou fu'
+  },
+  {
+    id: 'pinyin-dtnl',
+    title: '声母组合：d t n l',
+    category: '拼音',
+    body: 'da dai dan dang dao de dei deng di dia dian diao die ding diu dong dou du duan dui dun duo\nta tai tan tang tao te teng ti tian tiao tie ting tong tou tu tuan tui tun tuo\nna nai nan nang nao ne nei nen neng ni nian niang niao nie nin ning niu nong nou nu nv nuan nue nuo\nla lai lan lang lao le lei leng li lia lian liang liao lie lin ling liu long lou lu lv luan lue lun luo'
+  },
+  {
+    id: 'pinyin-gkh',
+    title: '声母组合：g k h',
+    category: '拼音',
+    body: 'ga gai gan gang gao ge gei gen geng gong gou gu gua guai guan guang gui gun guo\nka kai kan kang kao ke ken keng kong kou ku kua kuai kuan kuang kui kun kuo\nha hai han hang hao he hei hen heng hong hou hu hua huai huan huang hui hun huo'
+  },
+  {
+    id: 'pinyin-jqx',
+    title: '声母组合：j q x',
+    category: '拼音',
+    body: 'ji jia jian jiang jiao jie jin jing jiong jiu ju juan jue jun\nqi qia qian qiang qiao qie qin qing qiong qiu qu quan que qun\nxi xia xian xiang xiao xie xin xing xiong xiu xu xuan xue xun'
+  },
+  {
+    id: 'pinyin-zhchshr',
+    title: '翘舌音组合',
+    category: '拼音',
+    body: 'zha zhai zhan zhang zhao zhe zhen zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui zhun zhuo\ncha chai chan chang chao che chen cheng chi chong chou chu chua chuai chuan chuang chui chun chuo\nsha shai shan shang shao she shei shen sheng shi shou shu shua shuai shuan shuang shui shun shuo\nran rang rao re ren reng ri rong rou ru rua ruan rui run ruo'
+  },
+  {
+    id: 'pinyin-zcs',
+    title: '平舌音组合',
+    category: '拼音',
+    body: 'za zai zan zang zao ze zei zen zeng zi zong zou zu zuan zui zun zuo\nca cai can cang cao ce cen ceng ci cong cou cu cuan cui cun cuo\nsa sai san sang sao se sen seng si song sou su suan sui sun suo'
+  },
+  {
+    id: 'pinyin-compound-finals',
+    title: '复韵母强化',
+    category: '拼音',
+    body: 'ai ei ui ao ou iu ie ve er\nbai bei bao bie pou pei mou mei fou fei\ndai dui dao dou die diu tai tui tao tou tie\ngai gei gui gao gou kai kei kui kao kou\nhai hei hui hao hou zai zei zui zao zou'
+  },
+  {
+    id: 'pinyin-nasal-finals',
+    title: '鼻韵母强化',
+    category: '拼音',
+    body: 'an en in un vn ang eng ing ong\nban ben bin bang beng bing pan pen pin pang peng ping\ndan deng ding dong tan teng ting tong nan nen nin nang neng ning nong\ngan gen gang geng gong kan ken kang keng kong han hen hang heng hong'
+  },
+  {
     id: 'poem-jingyesi',
     title: '静夜思',
     category: '诗词',
@@ -47,6 +120,108 @@ const defaultContents = [
     title: '登鹳雀楼',
     category: '诗词',
     body: '白日依山尽，黄河入海流。\n欲穷千里目，更上一层楼。'
+  },
+  {
+    id: 'poem-xiangsi',
+    title: '相思',
+    category: '诗词',
+    body: '红豆生南国，春来发几枝。\n愿君多采撷，此物最相思。'
+  },
+  {
+    id: 'poem-luzhai',
+    title: '鹿柴',
+    category: '诗词',
+    body: '空山不见人，但闻人语响。\n返景入深林，复照青苔上。'
+  },
+  {
+    id: 'poem-zhuliguan',
+    title: '竹里馆',
+    category: '诗词',
+    body: '独坐幽篁里，弹琴复长啸。\n深林人不知，明月来相照。'
+  },
+  {
+    id: 'poem-jiangxue',
+    title: '江雪',
+    category: '诗词',
+    body: '千山鸟飞绝，万径人踪灭。\n孤舟蓑笠翁，独钓寒江雪。'
+  },
+  {
+    id: 'poem-xunyinzhebuyu',
+    title: '寻隐者不遇',
+    category: '诗词',
+    body: '松下问童子，言师采药去。\n只在此山中，云深不知处。'
+  },
+  {
+    id: 'poem-minnong',
+    title: '悯农',
+    category: '诗词',
+    body: '锄禾日当午，汗滴禾下土。\n谁知盘中餐，粒粒皆辛苦。'
+  },
+  {
+    id: 'poem-yong-e',
+    title: '咏鹅',
+    category: '诗词',
+    body: '鹅，鹅，鹅，曲项向天歌。\n白毛浮绿水，红掌拨清波。'
+  },
+  {
+    id: 'poem-feng',
+    title: '风',
+    category: '诗词',
+    body: '解落三秋叶，能开二月花。\n过江千尺浪，入竹万竿斜。'
+  },
+  {
+    id: 'poem-wanglushanpubu',
+    title: '望庐山瀑布',
+    category: '诗词',
+    body: '日照香炉生紫烟，遥看瀑布挂前川。\n飞流直下三千尺，疑是银河落九天。'
+  },
+  {
+    id: 'poem-zaofabaidicheng',
+    title: '早发白帝城',
+    category: '诗词',
+    body: '朝辞白帝彩云间，千里江陵一日还。\n两岸猿声啼不住，轻舟已过万重山。'
+  },
+  {
+    id: 'poem-zengwanglun',
+    title: '赠汪伦',
+    category: '诗词',
+    body: '李白乘舟将欲行，忽闻岸上踏歌声。\n桃花潭水深千尺，不及汪伦送我情。'
+  },
+  {
+    id: 'poem-jueju-dufu',
+    title: '绝句',
+    category: '诗词',
+    body: '两个黄鹂鸣翠柳，一行白鹭上青天。\n窗含西岭千秋雪，门泊东吴万里船。'
+  },
+  {
+    id: 'poem-fengqiaoyebo',
+    title: '枫桥夜泊',
+    category: '诗词',
+    body: '月落乌啼霜满天，江枫渔火对愁眠。\n姑苏城外寒山寺，夜半钟声到客船。'
+  },
+  {
+    id: 'poem-bochuanguazhou',
+    title: '泊船瓜洲',
+    category: '诗词',
+    body: '京口瓜洲一水间，钟山只隔数重山。\n春风又绿江南岸，明月何时照我还。'
+  },
+  {
+    id: 'poem-tixilinbi',
+    title: '题西林壁',
+    category: '诗词',
+    body: '横看成岭侧成峰，远近高低各不同。\n不识庐山真面目，只缘身在此山中。'
+  },
+  {
+    id: 'poem-yinhushang',
+    title: '饮湖上初晴后雨',
+    category: '诗词',
+    body: '水光潋滟晴方好，山色空蒙雨亦奇。\n欲把西湖比西子，淡妆浓抹总相宜。'
+  },
+  {
+    id: 'poem-shanxing',
+    title: '山行',
+    category: '诗词',
+    body: '远上寒山石径斜，白云生处有人家。\n停车坐爱枫林晚，霜叶红于二月花。'
   },
   {
     id: 'article-spring',
@@ -100,6 +275,252 @@ const defaultContents = [
     body: 'ability achieve active benefit compare culture develop economy education environment improve knowledge method process require society',
     translations: ['能力', '实现', '积极的', '益处', '比较', '文化', '发展', '经济', '教育', '环境', '改善', '知识', '方法', '过程', '需要', '社会']
   },
+  {
+    id: 'words-daily-life',
+    title: '日常生活',
+    category: '单词',
+    body: 'morning breakfast shower clothes wallet bottle phone umbrella market dinner evening sleep',
+    translations: ['早晨', '早餐', '淋浴', '衣服', '钱包', '瓶子', '电话', '雨伞', '市场', '晚餐', '晚上', '睡觉']
+  },
+  {
+    id: 'words-food',
+    title: '食物餐饮',
+    category: '单词',
+    body: 'bread rice noodle vegetable fruit chicken beef coffee tea sugar salt kitchen restaurant',
+    translations: ['面包', '米饭', '面条', '蔬菜', '水果', '鸡肉', '牛肉', '咖啡', '茶', '糖', '盐', '厨房', '餐厅']
+  },
+  {
+    id: 'words-travel',
+    title: '交通旅行',
+    category: '单词',
+    body: 'airport station ticket passport luggage hotel journey flight train subway bicycle direction',
+    translations: ['机场', '车站', '票', '护照', '行李', '酒店', '旅程', '航班', '火车', '地铁', '自行车', '方向']
+  },
+  {
+    id: 'words-nature',
+    title: '自然环境',
+    category: '单词',
+    body: 'mountain ocean forest desert valley cloud thunder sunlight season climate planet energy',
+    translations: ['山', '海洋', '森林', '沙漠', '山谷', '云', '雷', '阳光', '季节', '气候', '行星', '能源']
+  },
+  {
+    id: 'words-emotions',
+    title: '情绪感受',
+    category: '单词',
+    body: 'calm excited nervous proud lonely curious worried relaxed surprised grateful confident patient',
+    translations: ['平静的', '兴奋的', '紧张的', '自豪的', '孤独的', '好奇的', '担心的', '放松的', '惊讶的', '感激的', '自信的', '耐心的']
+  },
+  {
+    id: 'words-common-verbs',
+    title: '常用动词',
+    category: '单词',
+    body: 'accept build choose create decide explain follow happen include learn manage notice prepare remember share understand',
+    translations: ['接受', '建造', '选择', '创造', '决定', '解释', '跟随', '发生', '包含', '学习', '管理', '注意', '准备', '记住', '分享', '理解']
+  },
+  {
+    id: 'words-adjectives',
+    title: '常用形容词',
+    category: '单词',
+    body: 'available careful common different effective familiar important modern possible public simple useful valuable',
+    translations: ['可用的', '仔细的', '常见的', '不同的', '有效的', '熟悉的', '重要的', '现代的', '可能的', '公共的', '简单的', '有用的', '有价值的']
+  },
+  {
+    id: 'words-business',
+    title: '职场商务',
+    category: '单词',
+    body: 'agenda budget client contract deadline feedback meeting project report schedule strategy target teamwork update',
+    translations: ['议程', '预算', '客户', '合同', '截止日期', '反馈', '会议', '项目', '报告', '日程', '策略', '目标', '团队合作', '更新']
+  },
+  {
+    id: 'words-academic',
+    title: '学术阅读',
+    category: '单词',
+    body: 'analysis approach concept evidence factor issue principle research result source theory variable conclusion',
+    translations: ['分析', '方法', '概念', '证据', '因素', '问题', '原则', '研究', '结果', '来源', '理论', '变量', '结论']
+  },
+  {
+    id: 'words-internet',
+    title: '互联网词汇',
+    category: '单词',
+    body: 'account browser cache cookie download interface login password privacy search security upload website',
+    translations: ['账户', '浏览器', '缓存', 'Cookie', '下载', '界面', '登录', '密码', '隐私', '搜索', '安全', '上传', '网站']
+  },
+  makeProgrammingContent({
+    id: 'programming-js-types', title: '基础类型', language: 'JavaScript',
+    items: [['undefined', '未定义'], ['null', '空值'], ['boolean', '布尔值'], ['number', '数字'], ['bigint', '大整数'], ['string', '字符串'], ['symbol', '唯一标识'], ['object', '对象'], ['function', '函数']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-declarations', title: '声明与模块', language: 'JavaScript',
+    items: [['const', '常量声明'], ['let', '块级变量'], ['var', '函数级变量'], ['function', '函数声明'], ['class', '类声明'], ['import', '导入模块'], ['export', '导出模块'], ['default', '默认导出'], ['extends', '继承'], ['static', '静态成员']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-control', title: '流程控制', language: 'JavaScript',
+    items: [['if', '条件判断'], ['else', '否则分支'], ['switch', '多路选择'], ['case', '匹配分支'], ['for', '循环'], ['while', '条件循环'], ['do', '先执行循环'], ['break', '跳出'], ['continue', '继续下轮'], ['return', '返回结果'], ['try', '尝试执行'], ['catch', '捕获错误'], ['finally', '最终执行'], ['throw', '抛出错误']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-operators', title: '常用运算关键字', language: 'JavaScript',
+    items: [['typeof', '检查类型'], ['instanceof', '检查实例'], ['in', '检查属性'], ['delete', '删除属性'], ['new', '创建实例'], ['this', '当前上下文'], ['super', '父类引用'], ['void', '返回未定义'], ['yield', '生成器暂停'], ['await', '等待异步']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-array-mutate', title: '数组增删', language: 'JavaScript',
+    items: [['push', '末尾添加'], ['pop', '末尾移除'], ['shift', '开头移除'], ['unshift', '开头添加'], ['splice', '原位增删'], ['fill', '填充元素'], ['copyWithin', '内部复制'], ['reverse', '原位反转'], ['sort', '原位排序']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-array-copy', title: '数组复制与组合', language: 'JavaScript',
+    items: [['slice', '截取副本'], ['concat', '连接数组'], ['join', '连接字符串'], ['flat', '数组扁平化'], ['flatMap', '映射并扁平'], ['toReversed', '反转副本'], ['toSorted', '排序副本'], ['toSpliced', '增删副本'], ['with', '替换副本']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-array-iterate', title: '数组遍历', language: 'JavaScript',
+    items: [['forEach', '逐项执行'], ['map', '映射新数组'], ['filter', '筛选元素'], ['reduce', '累计结果'], ['reduceRight', '反向累计'], ['some', '是否部分满足'], ['every', '是否全部满足'], ['entries', '键值迭代器'], ['keys', '索引迭代器'], ['values', '值迭代器']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-array-search', title: '数组查找', language: 'JavaScript',
+    items: [['find', '查找元素'], ['findIndex', '查找索引'], ['findLast', '反向查找'], ['findLastIndex', '反向查索引'], ['includes', '是否包含'], ['indexOf', '首次位置'], ['lastIndexOf', '末次位置'], ['at', '按位置访问']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-string-search', title: '字符串查找', language: 'JavaScript',
+    items: [['length', '字符长度'], ['at', '按位置访问'], ['charAt', '获取字符'], ['includes', '是否包含'], ['indexOf', '首次位置'], ['lastIndexOf', '末次位置'], ['startsWith', '是否开头'], ['endsWith', '是否结尾'], ['search', '正则查找'], ['match', '正则匹配'], ['matchAll', '全部匹配']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-string-transform', title: '字符串转换', language: 'JavaScript',
+    items: [['slice', '截取字符串'], ['substring', '截取区间'], ['split', '分割字符串'], ['replace', '替换一次'], ['replaceAll', '全部替换'], ['trim', '去两端空白'], ['trimStart', '去开头空白'], ['trimEnd', '去结尾空白'], ['toLowerCase', '转小写'], ['toUpperCase', '转大写'], ['repeat', '重复字符串'], ['padStart', '开头填充'], ['padEnd', '结尾填充']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-object', title: '对象方法', language: 'JavaScript',
+    items: [['keys', '属性名数组'], ['values', '属性值数组'], ['entries', '键值对数组'], ['fromEntries', '键值对转对象'], ['assign', '合并对象'], ['create', '指定原型创建'], ['freeze', '冻结对象'], ['seal', '密封对象'], ['hasOwn', '检查自有属性'], ['getPrototypeOf', '获取原型'], ['setPrototypeOf', '设置原型']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-number-math', title: '数字与数学', language: 'JavaScript',
+    items: [['parseInt', '解析整数'], ['parseFloat', '解析小数'], ['isNaN', '判断非数字'], ['isFinite', '判断有限数'], ['toFixed', '固定小数位'], ['round', '四舍五入'], ['floor', '向下取整'], ['ceil', '向上取整'], ['trunc', '截去小数'], ['abs', '绝对值'], ['min', '最小值'], ['max', '最大值'], ['random', '随机数'], ['pow', '幂运算'], ['sqrt', '平方根']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-async', title: '异步与 Promise', language: 'JavaScript',
+    items: [['Promise', '异步结果'], ['async', '异步函数'], ['await', '等待结果'], ['then', '成功回调'], ['catch', '失败回调'], ['finally', '结束回调'], ['resolve', '创建成功结果'], ['reject', '创建失败结果'], ['all', '等待全部'], ['allSettled', '等待全部结束'], ['race', '等待最先结果'], ['any', '等待首个成功'], ['fetch', '网络请求']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-js-json-console', title: 'JSON 与调试', language: 'JavaScript',
+    items: [['stringify', '转为 JSON'], ['parse', '解析 JSON'], ['log', '打印日志'], ['info', '信息日志'], ['warn', '警告日志'], ['error', '错误日志'], ['table', '表格展示'], ['time', '开始计时'], ['timeEnd', '结束计时'], ['assert', '条件断言'], ['debugger', '调试断点']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-types', title: '基础类型', language: 'Python',
+    items: [['None', '空值'], ['bool', '布尔值'], ['int', '整数'], ['float', '浮点数'], ['complex', '复数'], ['str', '字符串'], ['list', '列表'], ['tuple', '元组'], ['range', '范围'], ['dict', '字典'], ['set', '集合'], ['frozenset', '不可变集合'], ['bytes', '字节串'], ['bytearray', '可变字节串']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-keywords', title: '流程关键字', language: 'Python',
+    items: [['if', '条件判断'], ['elif', '追加条件'], ['else', '否则分支'], ['for', '遍历循环'], ['while', '条件循环'], ['break', '跳出循环'], ['continue', '继续下轮'], ['pass', '空语句'], ['match', '模式匹配'], ['case', '匹配分支'], ['return', '返回结果'], ['yield', '生成器产出']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-declarations', title: '定义与导入', language: 'Python',
+    items: [['def', '定义函数'], ['class', '定义类'], ['lambda', '匿名函数'], ['import', '导入模块'], ['from', '指定来源'], ['as', '设置别名'], ['global', '全局变量'], ['nonlocal', '外层变量'], ['async', '异步定义'], ['await', '等待异步'], ['del', '删除引用']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-builtins-basic', title: '常用内置函数', language: 'Python',
+    items: [['print', '输出内容'], ['input', '读取输入'], ['len', '获取长度'], ['type', '获取类型'], ['isinstance', '检查类型'], ['id', '对象标识'], ['help', '查看帮助'], ['dir', '查看属性'], ['repr', '正式字符串'], ['format', '格式化'], ['callable', '是否可调用']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-builtins-number', title: '数值内置函数', language: 'Python',
+    items: [['abs', '绝对值'], ['round', '四舍五入'], ['pow', '幂运算'], ['divmod', '商和余数'], ['min', '最小值'], ['max', '最大值'], ['sum', '求和'], ['bin', '二进制字符串'], ['oct', '八进制字符串'], ['hex', '十六进制字符串'], ['int', '转整数'], ['float', '转浮点数'], ['complex', '创建复数']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-builtins-iterate', title: '迭代内置函数', language: 'Python',
+    items: [['range', '生成范围'], ['enumerate', '索引和值'], ['zip', '并行组合'], ['iter', '获取迭代器'], ['next', '获取下一项'], ['reversed', '反向迭代'], ['sorted', '排序列表'], ['map', '逐项映射'], ['filter', '逐项筛选'], ['all', '是否全部为真'], ['any', '是否任一为真']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-list', title: '列表方法', language: 'Python',
+    items: [['append', '末尾添加'], ['extend', '追加多个'], ['insert', '指定位置插入'], ['remove', '按值移除'], ['pop', '移除并返回'], ['clear', '清空列表'], ['index', '查找位置'], ['count', '统计次数'], ['sort', '原位排序'], ['reverse', '原位反转'], ['copy', '浅复制']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-string-query', title: '字符串判断', language: 'Python',
+    items: [['count', '统计次数'], ['find', '查找位置'], ['index', '查找或报错'], ['startswith', '是否开头'], ['endswith', '是否结尾'], ['isalnum', '是否字母数字'], ['isalpha', '是否字母'], ['isdigit', '是否数字'], ['islower', '是否小写'], ['isupper', '是否大写'], ['isspace', '是否空白']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-string-transform', title: '字符串转换', language: 'Python',
+    items: [['capitalize', '首字母大写'], ['casefold', '强制小写'], ['lower', '转小写'], ['upper', '转大写'], ['title', '标题格式'], ['strip', '去两端空白'], ['lstrip', '去左侧空白'], ['rstrip', '去右侧空白'], ['replace', '替换文本'], ['split', '分割字符串'], ['join', '连接字符串'], ['partition', '分成三段'], ['zfill', '零填充']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-dict', title: '字典方法', language: 'Python',
+    items: [['get', '安全取值'], ['keys', '键视图'], ['values', '值视图'], ['items', '键值视图'], ['update', '更新字典'], ['setdefault', '取值或设置'], ['pop', '移除指定键'], ['popitem', '移除末项'], ['clear', '清空字典'], ['copy', '浅复制'], ['fromkeys', '按键创建']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-set', title: '集合方法', language: 'Python',
+    items: [['add', '添加元素'], ['remove', '移除或报错'], ['discard', '安全移除'], ['pop', '移除任一项'], ['clear', '清空集合'], ['union', '并集'], ['intersection', '交集'], ['difference', '差集'], ['symmetric_difference', '对称差集'], ['issubset', '是否子集'], ['issuperset', '是否超集'], ['isdisjoint', '是否无交集'], ['update', '原位更新']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-python-exceptions', title: '异常与上下文', language: 'Python',
+    items: [['try', '尝试执行'], ['except', '捕获异常'], ['else', '无异常执行'], ['finally', '最终执行'], ['raise', '抛出异常'], ['assert', '条件断言'], ['with', '上下文管理'], ['open', '打开文件'], ['close', '关闭资源'], ['read', '读取内容'], ['write', '写入内容']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-document', title: '文档结构标签', language: 'HTML',
+    items: [['html', '文档根元素'], ['head', '文档信息'], ['body', '页面主体'], ['title', '页面标题'], ['meta', '元数据'], ['link', '外部资源'], ['style', '内嵌样式'], ['script', '脚本'], ['base', '基础地址'], ['noscript', '无脚本内容']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-semantic', title: '语义布局标签', language: 'HTML',
+    items: [['header', '页眉'], ['nav', '导航'], ['main', '主要内容'], ['section', '章节'], ['article', '独立文章'], ['aside', '附属内容'], ['footer', '页脚'], ['address', '联系信息'], ['div', '通用块容器'], ['span', '通用行内容器']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-text', title: '文本标签', language: 'HTML',
+    items: [['h1', '一级标题'], ['h2', '二级标题'], ['h3', '三级标题'], ['p', '段落'], ['br', '换行'], ['hr', '主题分隔'], ['strong', '重要文本'], ['em', '强调文本'], ['small', '附注文本'], ['mark', '高亮文本'], ['blockquote', '块引用'], ['q', '行内引用'], ['code', '代码'], ['pre', '预格式文本']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-list-table', title: '列表与表格标签', language: 'HTML',
+    items: [['ul', '无序列表'], ['ol', '有序列表'], ['li', '列表项'], ['dl', '描述列表'], ['dt', '描述术语'], ['dd', '描述内容'], ['table', '表格'], ['caption', '表格标题'], ['thead', '表头区域'], ['tbody', '表体区域'], ['tfoot', '表尾区域'], ['tr', '表格行'], ['th', '表头单元格'], ['td', '数据单元格']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-form', title: '表单标签', language: 'HTML',
+    items: [['form', '表单'], ['label', '字段标签'], ['input', '输入控件'], ['textarea', '多行输入'], ['button', '按钮'], ['select', '选择菜单'], ['option', '选择项'], ['optgroup', '选项分组'], ['fieldset', '字段分组'], ['legend', '分组标题'], ['datalist', '输入建议'], ['output', '计算结果'], ['progress', '进度'], ['meter', '度量值']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-media', title: '链接与媒体标签', language: 'HTML',
+    items: [['a', '超链接'], ['img', '图片'], ['picture', '响应式图片'], ['source', '媒体来源'], ['audio', '音频'], ['video', '视频'], ['track', '字幕轨道'], ['figure', '独立内容'], ['figcaption', '内容说明'], ['iframe', '嵌入页面'], ['canvas', '画布'], ['svg', '矢量图']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-global-attributes', title: '全局属性', language: 'HTML',
+    items: [['id', '唯一标识'], ['class', '类名'], ['style', '行内样式'], ['title', '补充信息'], ['lang', '内容语言'], ['dir', '文字方向'], ['hidden', '隐藏元素'], ['tabindex', '焦点顺序'], ['contenteditable', '允许编辑'], ['draggable', '允许拖动'], ['spellcheck', '拼写检查'], ['role', '无障碍角色']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-form-attributes', title: '表单属性', language: 'HTML',
+    items: [['name', '字段名称'], ['value', '字段值'], ['type', '控件类型'], ['placeholder', '占位提示'], ['required', '必填'], ['disabled', '禁用'], ['readonly', '只读'], ['checked', '已选中'], ['selected', '已选择'], ['multiple', '允许多个'], ['min', '最小值'], ['max', '最大值'], ['maxlength', '最大长度'], ['autocomplete', '自动完成']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-html-link-media-attributes', title: '链接媒体属性', language: 'HTML',
+    items: [['href', '链接地址'], ['target', '打开目标'], ['rel', '链接关系'], ['download', '下载文件'], ['src', '资源地址'], ['alt', '替代文本'], ['width', '宽度'], ['height', '高度'], ['loading', '加载策略'], ['controls', '播放控件'], ['autoplay', '自动播放'], ['loop', '循环播放'], ['muted', '静音'], ['poster', '视频封面']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-selectors', title: '选择器与状态', language: 'CSS',
+    items: [['class', '类选择器'], ['id', 'ID 选择器'], ['attribute', '属性选择器'], ['hover', '悬停状态'], ['focus', '焦点状态'], ['active', '激活状态'], ['checked', '选中状态'], ['disabled', '禁用状态'], ['first-child', '第一个子项'], ['last-child', '最后子项'], ['nth-child', '指定子项'], ['not', '排除匹配']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-box', title: '盒模型', language: 'CSS',
+    items: [['width', '宽度'], ['height', '高度'], ['min-width', '最小宽度'], ['max-width', '最大宽度'], ['margin', '外边距'], ['padding', '内边距'], ['border', '边框'], ['box-sizing', '尺寸计算'], ['overflow', '溢出处理'], ['visibility', '可见性'], ['opacity', '透明度'], ['box-shadow', '盒阴影']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-display-position', title: '显示与定位', language: 'CSS',
+    items: [['display', '显示类型'], ['block', '块级显示'], ['inline', '行内显示'], ['none', '不显示'], ['position', '定位方式'], ['relative', '相对定位'], ['absolute', '绝对定位'], ['fixed', '视口固定'], ['sticky', '粘性定位'], ['top', '顶部偏移'], ['right', '右侧偏移'], ['bottom', '底部偏移'], ['left', '左侧偏移'], ['z-index', '层叠顺序']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-flex', title: 'Flex 布局', language: 'CSS',
+    items: [['flex', '弹性布局'], ['flex-direction', '主轴方向'], ['flex-wrap', '是否换行'], ['flex-flow', '方向与换行'], ['justify-content', '主轴对齐'], ['align-items', '交叉轴对齐'], ['align-content', '多行对齐'], ['gap', '项目间距'], ['order', '排列顺序'], ['flex-grow', '放大比例'], ['flex-shrink', '缩小比例'], ['flex-basis', '基础尺寸'], ['align-self', '单项对齐']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-grid', title: 'Grid 布局', language: 'CSS',
+    items: [['grid', '网格布局'], ['grid-template-columns', '列轨道'], ['grid-template-rows', '行轨道'], ['grid-template-areas', '命名区域'], ['grid-column', '列位置'], ['grid-row', '行位置'], ['grid-area', '区域位置'], ['gap', '网格间距'], ['place-items', '项目对齐'], ['place-content', '整体对齐'], ['minmax', '尺寸范围'], ['repeat', '重复轨道'], ['fr', '剩余空间单位']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-text', title: '字体与文本', language: 'CSS',
+    items: [['color', '文字颜色'], ['font-family', '字体族'], ['font-size', '字号'], ['font-weight', '字重'], ['font-style', '字体样式'], ['line-height', '行高'], ['letter-spacing', '字间距'], ['text-align', '水平对齐'], ['text-decoration', '文本装饰'], ['text-transform', '大小写转换'], ['white-space', '空白处理'], ['word-break', '换行规则'], ['text-overflow', '溢出文本']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-background', title: '背景与边框', language: 'CSS',
+    items: [['background', '背景简写'], ['background-color', '背景颜色'], ['background-image', '背景图片'], ['background-size', '背景尺寸'], ['background-position', '背景位置'], ['background-repeat', '背景重复'], ['border-width', '边框宽度'], ['border-style', '边框样式'], ['border-color', '边框颜色'], ['border-radius', '圆角'], ['outline', '轮廓线'], ['linear-gradient', '线性渐变'], ['radial-gradient', '径向渐变']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-motion', title: '变换与动画', language: 'CSS',
+    items: [['transform', '元素变换'], ['translate', '平移'], ['rotate', '旋转'], ['scale', '缩放'], ['transition', '过渡'], ['transition-duration', '过渡时长'], ['animation', '动画简写'], ['animation-name', '动画名称'], ['animation-duration', '动画时长'], ['animation-delay', '动画延迟'], ['animation-iteration-count', '播放次数'], ['keyframes', '关键帧'], ['will-change', '变化提示']]
+  }),
+  makeProgrammingContent({
+    id: 'programming-css-responsive', title: '响应式与变量', language: 'CSS',
+    items: [['media', '媒体查询'], ['supports', '特性查询'], ['container', '容器查询'], ['orientation', '屏幕方向'], ['prefers-color-scheme', '颜色偏好'], ['prefers-reduced-motion', '减少动效偏好'], ['var', '读取变量'], ['calc', '计算表达式'], ['clamp', '限制范围'], ['min', '取最小值'], ['max', '取最大值'], ['rem', '根字号单位'], ['vw', '视口宽度单位'], ['vh', '视口高度单位']]
+  }),
   makeDialogueContent({
     id: 'dialogue-progress',
     title: '老板：进度沟通',
@@ -219,8 +640,8 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-client-delay',
-    title: '老板：客户延期',
-    category: '对话·客户沟通',
+    title: '老板：延期应对',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '客户问为什么这次交付又推迟了。',
@@ -258,8 +679,8 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-client-requirement',
-    title: '老板：需求确认',
-    category: '对话·客户沟通',
+    title: '老板：需求管理',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '客户临时加了一个需求，说最好这周一起做完。',
@@ -297,8 +718,10 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-interview',
-    title: '老板：面试追问',
+    title: '面试官：经历追问',
     category: '对话·面试问答',
+    incomingRole: '候选人',
+    replyRole: '面试官',
     messages: [
       {
         incoming: '我上一份工作主要负责团队日常运营，也参与过几个重要项目。',
@@ -336,8 +759,8 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-daily',
-    title: '老板：日常聊天',
-    category: '对话·日常聊天',
+    title: '老板：状态关心',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '今天状态怎么样？',
@@ -375,8 +798,8 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-service-refund',
-    title: '老板：售后处理',
-    category: '对话·客服售后',
+    title: '老板：售后管理',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '用户说用了以后没有效果，要求退款。',
@@ -492,8 +915,8 @@ const defaultContents = [
   }),
   makeDialogueContent({
     id: 'dialogue-client-quotation',
-    title: '老板：商务报价',
-    category: '对话·客户沟通',
+    title: '老板：报价管理',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '客户让我们今天就给出最终报价。',
@@ -532,7 +955,7 @@ const defaultContents = [
   makeDialogueContent({
     id: 'dialogue-recruiting',
     title: '老板：招聘沟通',
-    category: '对话·面试问答',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '这个岗位的招聘要求要怎么写？',
@@ -571,7 +994,7 @@ const defaultContents = [
   makeDialogueContent({
     id: 'dialogue-leave',
     title: '老板：请假安排',
-    category: '对话·日常聊天',
+    category: '对话·工作管理',
     messages: [
       {
         incoming: '老板，我下周需要请两天假。',
@@ -605,6 +1028,240 @@ const defaultContents = [
         incoming: '那我今天就把请假申请提交。',
         reply: '好，提交后把交接清单发给相关同事，确认无遗漏就安心休息。'
       }
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-friends-weekend', title: '朋友：周末约饭', category: '对话·日常聊天', incomingRole: '朋友', replyRole: '我',
+    pairs: [
+      ['这周末有空吗？好久没一起吃饭了。', '有空呀，我也正想找你聊聊，周六晚上怎么样？'],
+      ['周六可以，你最近有没有特别想吃的？', '我想吃点清淡的，你知道那家新开的云南菜吗？'],
+      ['听说过，不过好像要提前排队，我们几点去？', '那就五点半见吧，早点过去应该不用等太久。'],
+      ['行，要不要再叫上小林和阿杰一起？', '可以，你在群里问一声，看他们当天有没有安排。'],
+      ['小林说能来，阿杰晚上可能要加班。', '那我们先订三个人的位置，他下班早的话再过来。'],
+      ['吃完饭之后要不要顺便去附近逛逛？', '好啊，附近正好有个夜市，我们可以过去走一圈。'],
+      ['你还记得上次夜市买的那个奇怪摆件吗？', '当然记得，现在还放在我桌上，每次看到都想笑。'],
+      ['那就这么定了，周六出发前我再联系你。', '没问题，我会提前到，到时候在餐厅门口等你们。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-besties-hearttalk', title: '闺蜜：烦恼倾诉', category: '对话·日常聊天', incomingRole: '闺蜜', replyRole: '我',
+    pairs: [
+      ['我今天心情特别差，感觉做什么都不顺。', '先别一个人憋着，你慢慢说，我现在有时间听你讲。'],
+      ['上午被领导批评了，明明不全是我的问题。', '被误解确实很难受，你当时有没有机会把情况说清楚？'],
+      ['我一紧张就没说出来，回来以后越想越委屈。', '那就先把事实写下来，等情绪稳一点再找合适机会沟通。'],
+      ['可我怕再提这件事，会显得自己特别计较。', '说明事实不等于计较，语气平和、重点清楚就可以了。'],
+      ['你每次都能把我从情绪里拉出来一点。', '因为我知道你不是没能力，只是今天刚好遇到了难题。'],
+      ['晚上能陪我出去走走吗？我不想待在家里。', '当然可以，我去找你，我们边走边聊，不着急做决定。'],
+      ['那我请你喝奶茶，算是今天的情绪补偿。', '奶茶可以喝，不过你不用补偿我，陪你本来就是应该的。'],
+      ['谢谢你，跟你说完以后感觉轻松多了。', '这就对了，今晚先好好休息，明天再处理明天的事情。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-guys-game', title: '男生朋友：约球开黑', category: '对话·日常聊天', incomingRole: '哥们', replyRole: '我',
+    pairs: [
+      ['晚上有空没？我们准备去球场打一会儿。', '有空，我吃完饭就过去，你们大概几点开始打？'],
+      ['七点左右，还是上次那个室外球场。', '行，我带两瓶水过去，顺便把篮球也拿上。'],
+      ['今天人不多，估计只能打半场三对三。', '三对三也挺好，正好少跑一点，先活动开再打。'],
+      ['你上次扭到的脚怎么样了，能正常跑吗？', '已经没事了，不过我今天会控制一下，不做太猛的动作。'],
+      ['打完要不要去我家开两局游戏？', '可以，不过别玩得太晚，我明天早上还有事情。'],
+      ['放心，十一点前结束，输了的人请夜宵。', '你先别急着立规矩，上次说请客的人好像也是你。'],
+      ['上次那是意外，今天我肯定能赢回来。', '行，那就看你表现，输了可别又找网络当借口。'],
+      ['就这么说定了，你出门的时候在群里说一声。', '收到，我换好衣服就走，大概二十分钟以后到。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-girls-trip', title: '女生朋友：旅行计划', category: '对话·日常聊天', incomingRole: '朋友', replyRole: '我',
+    pairs: [
+      ['下个月的小长假，要不要一起出去玩几天？', '可以呀，我正想换个地方放松一下，你有想去的城市吗？'],
+      ['我在海边和古城之间犹豫，你更喜欢哪个？', '如果只有三天，我更想去古城，路上花的时间会少一点。'],
+      ['我也是这么想的，而且那边最近天气正舒服。', '那我们先看看车票和住宿，再决定具体哪一天出发。'],
+      ['住宿想住安静一点的，离景点远点也没关系。', '好，我筛几家评价稳定的民宿，晚上把链接发给你。'],
+      ['行程不要排太满，我不想每天都早起赶景点。', '赞同，每天安排一两个地方，剩下时间随便逛逛就好。'],
+      ['要不要专门找一天拍照？我想带几套衣服。', '可以，我们挑光线好的傍晚，其他时候轻装出门更方便。'],
+      ['预算先定一下吧，免得到时候花得没数。', '每人先按两千左右准备，车票和住宿确定后再调整。'],
+      ['好期待，我今晚就开始整理想去的店。', '你负责收藏吃的，我负责路线，周末我们一起把计划定下来。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-couple-dinner', title: '情侣：晚餐与沟通', category: '对话·日常聊天', incomingRole: '恋人', replyRole: '我',
+    pairs: [
+      ['今晚想吃什么？我下班以后可以顺路买菜。', '想吃你上次做的番茄牛腩，我可以提前回去准备配菜。'],
+      ['可以，不过牛腩要炖很久，可能会晚一点吃饭。', '没关系，我们慢慢做，饿了就先吃点水果垫一下。'],
+      ['你今天工作顺利吗？中午看你消息有点少。', '下午一直在开会，不是故意不回你，现在已经处理完了。'],
+      ['我知道，只是有时候等不到消息会有一点担心。', '以后忙之前我先告诉你一声，免得你不知道我在做什么。'],
+      ['好，我也会少一点胡思乱想，有事直接问你。', '这样最好，我们把感受说出来，比互相猜来猜去轻松。'],
+      ['周末要不要回去看看爸妈，他们昨天问起你了。', '可以，我们周六上午过去，顺便带点他们喜欢的水果。'],
+      ['那周日就不安排事情了，在家休息一天。', '好啊，最近都挺忙的，留一天什么都不做也很好。'],
+      ['听起来很舒服，我买好菜就早点回家。', '路上慢一点，不着急，我先回去把米饭和配菜准备好。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-client-product', title: '客户：产品功能咨询', category: '对话·客户沟通', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['你好，我想了解一下你们这个产品主要能做什么？', '您好，这款产品主要用于记录、整理和同步日常工作资料。'],
+      ['手机和电脑可以同时使用吗？数据会同步吗？', '可以，同一账户登录后会自动同步，您也可以手动刷新。'],
+      ['如果没有网络，还能继续查看以前的内容吗？', '已经缓存的内容可以查看，新修改会在恢复网络后同步。'],
+      ['我可以把现有文件一次性导入进去吗？', '支持常见文档批量导入，单次文件数量和大小会有限制。'],
+      ['团队里不同成员能设置不一样的权限吗？', '可以设置管理员、编辑者和只读成员，并单独调整权限。'],
+      ['以后不使用了，里面的数据能全部导出来吗？', '可以在设置中导出数据，我们也提供账户注销和删除功能。'],
+      ['你们有没有试用期？我想先让团队体验一下。', '目前提供十四天试用，试用期间可以体验主要协作功能。'],
+      ['好的，那我先注册试用，有问题再来咨询。', '好的，注册过程中遇到任何问题，都可以随时联系我们。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-client-account', title: '客户：账户登录问题', category: '对话·客户沟通', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我换了手机以后登录不上，一直提示验证失败。', '您好，我先帮您确认账户，请问登录使用的是手机号吗？'],
+      ['对，就是现在这个手机号，但收不到验证码。', '请先检查短信拦截记录，并确认手机信号和号码状态正常。'],
+      ['拦截记录里没有，其他平台的验证码可以收到。', '了解，我为您重新发送一次，请在一分钟内留意新的短信。'],
+      ['这次收到了，但是输入以后提示验证码已过期。', '可能使用了上一条验证码，请输入最新短信中的六位数字。'],
+      ['现在可以登录了，不过原来的资料没有显示。', '请确认登录方式与旧设备一致，微信登录和手机号是不同账户。'],
+      ['我以前好像是用微信登录的，那要怎么合并？', '您可以先退出当前账户，再使用微信登录后绑定这个手机号。'],
+      ['绑定以后，手机号登录也能看到同一份资料吗？', '是的，绑定成功后两种方式都会进入同一个账户。'],
+      ['明白了，谢谢，我现在按照这个步骤操作。', '不客气，如果资料仍未恢复，请把页面截图发给我们核查。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-client-plan', title: '客户：套餐价格咨询', category: '对话·客户沟通', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['个人版和团队版有什么区别，应该怎么选择？', '个人版适合独立使用，团队版增加成员管理和协作权限。'],
+      ['团队版是按照账户数量收费，还是统一价格？', '团队版按照实际成员数量计费，管理员可以随时增减席位。'],
+      ['如果中途增加成员，费用从什么时候开始计算？', '新增席位会按剩余周期折算，不会重复收取已过去的费用。'],
+      ['年付是否有优惠？可以先月付再转年付吗？', '年付价格更优惠，月付用户也可以随时升级为年付方案。'],
+      ['升级后，之前月付剩下的时间会不会浪费？', '不会，未使用金额会自动抵扣升级后的订单费用。'],
+      ['公司付款需要发票，你们支持开专票吗？', '支持电子普票和增值税专票，付款后可提交开票信息。'],
+      ['如果使用一段时间不合适，可以申请退款吗？', '退款范围与使用时长有关，下单前页面会展示具体规则。'],
+      ['了解了，我先申请试用，再决定购买哪种套餐。', '好的，试用期间有任何选型问题，我们都可以协助评估。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-client-feature', title: '客户：功能使用指导', category: '对话·客户沟通', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我找不到批量导出的入口，是不是取消了？', '入口还在，请进入内容列表，先勾选需要导出的项目。'],
+      ['我已经勾选了，但页面上还是没有导出按钮。', '请点击右上角的更多操作，批量导出就在展开菜单中。'],
+      ['看到了，导出的文件可以选择不同格式吗？', '可以选择文档、表格或压缩包，具体选项取决于内容类型。'],
+      ['图片也会一起下载吗？我需要完整保存资料。', '选择压缩包时会包含原始图片，文档格式会嵌入可用图片。'],
+      ['导出过程中能关闭页面吗？内容比较多。', '建议保持页面打开，任务完成后浏览器会自动开始下载。'],
+      ['如果导出失败，会不会影响原来的内容？', '不会，导出操作只读取数据，不会修改或删除原始内容。'],
+      ['刚才提示有两个文件无法导出，该怎么处理？', '请查看失败列表，通常是文件损坏或当前账户没有查看权限。'],
+      ['好的，我先检查权限，不行再联系你们。', '可以，若仍然失败，请提供任务编号，我们会继续为您排查。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-client-security', title: '客户：隐私安全咨询', category: '对话·客户沟通', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我们准备存放内部资料，想确认数据是否安全。', '您好，数据传输和存储都会加密，并有严格的访问控制。'],
+      ['平台员工能直接看到我们上传的文件内容吗？', '普通员工无法查看，只有授权排障且经审批后才能有限访问。'],
+      ['管理员可以查看团队成员的哪些操作记录？', '管理员可查看登录、共享和权限变更等必要的安全日志。'],
+      ['如果成员离职，怎样确保他不能继续访问？', '管理员移除成员后，其团队权限会立即失效并退出相关设备。'],
+      ['是否支持双重验证，避免密码泄露后被登录？', '支持，您可以在安全设置中开启验证器或短信二次验证。'],
+      ['我们删除文件以后，服务器还会保留多久？', '文件先进入回收站，彻底删除后会按备份周期逐步清除。'],
+      ['能否下载你们的安全说明，给公司内部评估？', '可以，我稍后发送安全白皮书和常见合规问题说明。'],
+      ['好的，收到资料后我们再联系你们确认。', '没问题，如需填写安全问卷，也可以发送给我们协助处理。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-support-refund', title: '售后：退款申请', category: '对话·客服售后', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我昨天买的商品不合适，想申请退货退款。', '您好，可以的，请问商品是否使用过，包装和配件完整吗？'],
+      ['只打开看了一下，没有使用，包装也都还在。', '好的，这种情况可以申请七天无理由退货，我来发起流程。'],
+      ['退货运费需要我自己承担吗？怎么寄回去？', '无质量问题时需要您承担运费，页面会提供退货地址。'],
+      ['我可以自己选择快递吗？需要购买保价吗？', '普通快递都可以，贵重商品建议保价并保留寄件凭证。'],
+      ['寄出以后在哪里填写快递单号？', '进入退款详情，点击填写物流信息，提交快递公司和单号。'],
+      ['你们收到货以后，大概多久可以退款？', '仓库验收通过后通常二十四小时内退款，原路退回账户。'],
+      ['如果包装在运输中损坏，会影响退款吗？', '请妥善加固包装，运输损坏需要结合签收照片进一步确认。'],
+      ['明白了，我今天寄出，之后再关注退款进度。', '好的，请及时填写物流单号，有异常我们会在订单里通知您。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-support-damaged', title: '售后：商品破损', category: '对话·客服售后', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['快递刚送到，但我打开以后发现商品已经破了。', '非常抱歉给您带来不便，请先不要丢弃包装和快递面单。'],
+      ['我需要拍哪些照片，才能证明收到时就是坏的？', '请拍商品破损处、完整外包装、填充物和快递面单照片。'],
+      ['已经拍好了，是直接在聊天窗口里发给你吗？', '可以，请把照片依次上传，我核实后为您提供处理方案。'],
+      ['我比较着急使用，可以直接给我补发一个吗？', '可以优先申请补发，审核通过后我们会尽快安排新商品。'],
+      ['坏掉的这个还需要寄回去吗？运费谁承担？', '是否寄回要看审核结果，如需寄回，运费会由商家承担。'],
+      ['补发的商品大概什么时候可以发出？', '资料确认无误后预计今天发出，物流单号会同步到订单。'],
+      ['如果第二次收到还是破损，我该怎么办？', '请再次联系我们，我们会升级处理并检查包装和运输环节。'],
+      ['好的，照片已经全部上传，麻烦尽快处理。', '已经收到，我现在提交审核，预计一小时内给您明确回复。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-support-wrong-item', title: '售后：错发漏发', category: '对话·客服售后', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我的订单买了两件商品，包裹里只有一件。', '您好，我先核对订单，请确认外包装有没有破损或拆封痕迹。'],
+      ['包装是完整的，里面确实只放了一件商品。', '了解，请拍一下包裹内物品、包装和快递面单给我核实。'],
+      ['照片发过去了，我买的是蓝色，收到的还是黑色。', '很抱歉，这个订单同时存在漏发和错发，我会优先处理。'],
+      ['我不想退款，能不能把正确的两件重新发来？', '可以，我们核实后为您补发，并提供错发商品的退回方式。'],
+      ['退回商品需要我先垫付快递费吗？', '不需要，我们会提供退货码，您到指定快递点直接寄回。'],
+      ['补发会使用原来的收货地址吗？', '默认使用原地址，发货前我可以帮助您再次确认或修改。'],
+      ['地址不用改，希望这次发货前仔细检查一下。', '已经为订单添加复核备注，仓库打包时会核对颜色和数量。'],
+      ['好的，有物流信息以后麻烦通知我。', '没问题，补发出库后系统会自动发送物流信息和预计时间。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-support-repair', title: '售后：保修维修', category: '对话·客服售后', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['设备用了半年突然无法开机，还在保修期内吗？', '您好，请提供订单号或设备序列号，我先查询保修状态。'],
+      ['订单号已经发给你了，是去年十二月购买的。', '查询到了，设备仍在一年保修期内，可以申请检测维修。'],
+      ['送修之前有什么方法可以自己先检查吗？', '请先更换电源并长按开机键十秒，确认指示灯是否亮起。'],
+      ['试过以后还是没有反应，指示灯也不亮。', '了解，建议寄回检测，我现在为您创建售后维修单。'],
+      ['设备里的个人数据会不会在维修时丢失？', '维修可能需要重置设备，请尽量提前备份，工程师也会先评估。'],
+      ['来回寄送的运费怎么处理？需要带哪些配件？', '保修故障由我们承担运费，只需寄送主机和必要的电源。'],
+      ['一般检测和维修需要多长时间？', '签收后预计三个工作日完成检测，维修时间会另行通知。'],
+      ['好的，请把寄送地址和注意事项发给我。', '售后单已经创建，地址、包装要求和寄件方式都在详情页。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-support-subscription', title: '售后：取消续费', category: '对话·客服售后', incomingRole: '客户', replyRole: '客服',
+    pairs: [
+      ['我发现账户开了自动续费，想把它关闭。', '您好，可以关闭，请问您是通过应用商店还是网页购买的？'],
+      ['我是直接在网页上付款的，用的是支付宝。', '请进入账户设置里的订阅管理，点击关闭自动续费即可。'],
+      ['关闭以后，已经支付的这个月还能继续使用吗？', '可以，关闭只影响下次扣费，当前权益会保留到到期日。'],
+      ['我刚才找了一圈，没有看到订阅管理入口。', '请先确认登录的是付款账户，然后在设置中选择账单与订阅。'],
+      ['现在看到了，页面提示下个月三号到期。', '是的，关闭成功后，三号之前仍然可以正常使用全部功能。'],
+      ['到期以后我的历史数据会被删除吗？', '不会立即删除，账户会转为免费版，超出部分暂时只读保存。'],
+      ['以后重新订阅，原来的设置还能恢复吗？', '可以，使用同一账户重新订阅后，原有数据和设置仍会保留。'],
+      ['好的，我已经关闭了，谢谢你的说明。', '不客气，页面显示已关闭就不会再次扣费，您可以放心使用。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-interview-introduction', title: '面试：自我介绍', category: '对话·面试问答', incomingRole: '面试官', replyRole: '候选人',
+    pairs: [
+      ['请先用两三分钟简单介绍一下你自己。', '您好，我有三年产品运营经验，主要负责用户增长和活动策划。'],
+      ['你为什么想从上一家公司离开？', '原岗位成长趋于稳定，我希望承担更完整的业务目标和项目责任。'],
+      ['你对我们公司和这个岗位了解多少？', '我重点研究了产品用户和近期业务，也对岗位职责做了对应梳理。'],
+      ['你认为自己最适合这个岗位的优势是什么？', '我的优势是能把复杂目标拆成行动，并持续用数据验证和调整。'],
+      ['有没有哪项岗位要求是你目前不够熟悉的？', '行业经验还需要补充，但我已经开始整理资料并访谈相关从业者。'],
+      ['如果入职，你希望前三个月完成什么？', '先理解业务和团队协作方式，再独立负责一个可衡量的小项目。'],
+      ['你选择下一份工作时最看重哪些因素？', '我看重目标是否清晰、团队是否坦诚，以及个人能否持续成长。'],
+      ['好的，自我介绍部分差不多了，你还有补充吗？', '暂时没有，感谢您的时间，我可以继续回答具体经历方面的问题。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-interview-project', title: '面试：项目经验', category: '对话·面试问答', incomingRole: '面试官', replyRole: '候选人',
+    pairs: [
+      ['请介绍一个你认为最有代表性的项目。', '我曾负责新用户激活项目，目标是在两个月内提高首周留存率。'],
+      ['你在项目里具体负责哪些工作？', '我负责问题分析、方案设计、跨团队推进，以及上线后的数据复盘。'],
+      ['项目开始时，你们遇到的核心问题是什么？', '用户注册后不知道下一步做什么，关键功能的首次使用率很低。'],
+      ['你是怎样判断这个问题最值得优先解决的？', '我们结合行为数据和用户访谈，确认流失集中在首次使用阶段。'],
+      ['你提出了什么方案，为什么选择这个方案？', '我设计了分步引导和示例任务，因为它能较低成本验证假设。'],
+      ['推进过程中最大的阻力是什么？', '研发资源紧张，我把方案拆成两期，先上线最关键的验证部分。'],
+      ['项目最后取得了怎样的结果？', '首周留存率提升八个百分点，关键功能使用率也明显提高。'],
+      ['如果重新做一次，你会改变什么？', '我会更早定义分群指标，避免平均数据掩盖不同用户的差异。']
+    ]
+  }),
+  makeDialogueScenario({
+    id: 'dialogue-interview-career', title: '面试：职业规划', category: '对话·面试问答', incomingRole: '面试官', replyRole: '候选人',
+    pairs: [
+      ['你对未来三年的职业发展有什么规划？', '我希望先独立负责核心项目，再逐步形成可复用的方法和影响力。'],
+      ['你更希望走专业路线还是管理路线？', '目前更偏专业路线，但也愿意承担项目协作和新人指导责任。'],
+      ['你怎样判断自己是否取得了真正的成长？', '我会看能否解决更复杂的问题，并让成果不再依赖个人经验。'],
+      ['如果工作内容和预期不完全一致怎么办？', '我会先理解业务需要，主动沟通目标，再寻找可以发挥价值的切入点。'],
+      ['你能接受一段时间内重复性较高的工作吗？', '可以，但我也会观察流程，尝试通过工具和规范减少重复成本。'],
+      ['什么情况会让你考虑再次更换工作？', '如果长期缺乏明确目标和反馈，并且沟通后仍没有改善，我会评估。'],
+      ['你希望直属主管以什么方式和你合作？', '我希望目标和边界清楚，关键节点及时反馈，执行中保留自主空间。'],
+      ['你还有什么想了解这个岗位的吗？', '我想了解团队当前最重要的目标，以及这个岗位半年后的成功标准。']
     ]
   })
 ]

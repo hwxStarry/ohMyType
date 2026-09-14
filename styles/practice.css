@@ -203,6 +203,39 @@
   width: 0.45em;
 }
 
+#typingText.programming-text {
+  justify-content: flex-start;
+  gap: 8px 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: clamp(22px, 3.2vw, 32px);
+  line-height: 1.5;
+}
+
+.code-token {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 4px;
+  padding: 3px 7px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.code-token-main {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.code-token.current {
+  border-color: rgba(96, 165, 250, 0.48);
+  background: rgba(37, 99, 235, 0.14);
+}
+
+.code-space {
+  width: 0.3em;
+}
+
 #typingText.dialogue-text {
   display: grid !important;
   justify-content: stretch;
@@ -278,6 +311,19 @@
   word-break: break-word;
   font-size: 19px !important;
   line-height: 1.58 !important;
+}
+
+.dialogue-speaker {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dialogue-row.reply .dialogue-speaker {
+  text-align: right;
 }
 
 .dialogue-bubble .char {
