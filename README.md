@@ -13,7 +13,7 @@ Oh My Type 是一个面向诗词、文章、拼音、单词和对话的打字练
 
 - 拼音、键位和英文单词的日常练习。
 - 诗词、短文、文言文等中文内容的逐字输入训练。
-- 老板回复、客户沟通、面试问答等对话式输入训练。
+- 朋友、闺蜜、情侣、客户与客服、面试问答等对话式输入训练。
 - 临时粘贴一段文本，快速生成自己的练习内容。
 - 不想注册账号，只想在浏览器本地保存练习记录的用户。
 
@@ -22,6 +22,8 @@ Oh My Type 是一个面向诗词、文章、拼音、单词和对话的打字练
 - 12 组拼音、20 首古诗词、14 组主题单词，以及 44 组 JavaScript、Python、HTML、CSS 编程词汇练习。
 - 编程内容在侧边栏按语言分组，每个术语都附有简短中文释义。
 - 左侧按分类展开/收缩，对话内容按场景放在二级菜单，支持侧边栏收起。
+- 支持按标题、分类、正文和编程释义搜索，并可随机选择当前分类内容。
+- 支持本地收藏和最近练习列表，收藏页与最近练习页均可随机开始。
 - 隐藏输入框捕获键盘输入，练习区实时标记正确、错误和当前位置。
 - 拼音练习使用无声调字母输入，并绕过中文输入法干扰。
 - 对话练习按场景显示真实角色：工作管理使用老板与员工，客户和售后使用客户与客服，面试使用面试官与候选人，日常聊天覆盖朋友、闺蜜、同性朋友和情侣。
@@ -73,6 +75,7 @@ http://localhost:8080
 ├── src/
 │   ├── annotations.js  # 拼音和单词标注
 │   ├── constants.js    # 常量、localStorage key、分类、键盘布局
+│   ├── content-library.js # 内容搜索、收藏、最近练习和随机选择
 │   ├── data.js         # 默认内容和游戏链接数据
 │   ├── fun-data.js     # 趣味玩法和分支剧情数据
 │   ├── fun-typing.js   # 趣味玩法的逐字输入、候选和下一键状态
@@ -91,6 +94,7 @@ http://localhost:8080
     ├── games.css
     ├── fun.css
     ├── history.css
+    ├── library.css
     ├── dialogs.css
     └── responsive.css
 ```
@@ -114,6 +118,8 @@ http://localhost:8080
 - `ohmytype_sidebar_collapsed`：侧边栏收起状态。
 - `ohmytype_open_categories`：分类展开状态。
 - `ohmytype_practice_mode`：练习模式。
+- `ohmytype_favorite_contents`：收藏的练习内容 ID。
+- `ohmytype_recent_contents`：最近打开的练习内容 ID。
 - `typestart_history`：练习历史。
 - `typestart_mistakes`：错字统计。
 - `ohmytype_completion_sound`：完成音效设置。
@@ -124,6 +130,7 @@ http://localhost:8080
 node tests/typing-state.test.js
 node tests/storage.test.js
 node tests/content-data.test.js
+node tests/content-library.test.js
 node tests/dialogue-data.test.js
 node tests/fun-data.test.js
 node tests/fun-typing.test.js

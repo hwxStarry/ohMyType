@@ -74,6 +74,7 @@
 .app-shell.sidebar-collapsed .category-toggle small,
 .app-shell.sidebar-collapsed .content-item small,
 .app-shell.sidebar-collapsed .content-item em,
+.app-shell.sidebar-collapsed .content-tools,
 .app-shell.sidebar-collapsed .dialogue-subgroups,
 .app-shell.sidebar-collapsed .side-action span:first-child,
 .app-shell.sidebar-collapsed .count {
@@ -158,6 +159,52 @@ summary.side-title::after {
 
   /* 隐藏 IE 和 Edge 滚动条 */
   -ms-overflow-style: none;
+}
+
+.content-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.content-tools input,
+.content-tools button {
+  min-width: 0;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.content-tools input {
+  width: 100%;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.content-tools input:focus {
+  border-color: #a83232;
+  outline: 2px solid rgba(168, 50, 50, 0.12);
+}
+
+.content-tools button {
+  padding: 0 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.content-tools button:hover {
+  border-color: #a83232;
+  color: #a83232;
+}
+
+.content-search-empty {
+  padding: 14px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }
 .content-list::-webkit-scrollbar {
   display: none;
@@ -288,7 +335,8 @@ summary.side-title::after {
 }
 
 .edit-content,
-.delete-content {
+.delete-content,
+.favorite-content {
   flex: 0 0 auto;
   width: 22px;
   height: 22px;
@@ -297,6 +345,18 @@ summary.side-title::after {
   place-items: center;
   color: #a1a1aa;
   line-height: 1;
+}
+
+.favorite-content {
+  font-size: 15px;
+}
+
+.favorite-content:hover,
+.favorite-content:focus,
+.favorite-content.active {
+  background: #fef3c7;
+  color: #b45309;
+  outline: none;
 }
 
 .edit-content {

@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="./styles/games.css" />
     <link rel="stylesheet" href="./styles/fun.css" />
     <link rel="stylesheet" href="./styles/history.css" />
+    <link rel="stylesheet" href="./styles/library.css" />
     <link rel="stylesheet" href="./styles/dialogs.css" />
     <link rel="stylesheet" href="./styles/responsive.css" />
   </head>
@@ -45,8 +46,12 @@
           <button id="sidebarToggle" class="side-toggle" type="button" aria-label="收起侧边栏" title="收起侧边栏">‹</button>
         </div>
 
-        <details class="side-section" data-side-section="content">
+        <details class="side-section" data-side-section="content" open>
           <summary class="side-title">练习内容</summary>
+          <div class="content-tools">
+            <input id="contentSearch" type="search" placeholder="搜索标题、内容或释义" aria-label="搜索练习内容" />
+            <button id="randomContentButton" type="button" title="从当前分类随机选择">随机</button>
+          </div>
           <div id="contentList" class="content-list"></div>
         </details>
 
@@ -76,6 +81,14 @@
 
         <details class="side-section" data-side-section="personal">
           <summary class="side-title">我的练习</summary>
+          <button id="favoriteTab" class="side-action" type="button">
+            <span>我的收藏</span>
+            <span id="favoriteCount" class="count">0</span>
+          </button>
+          <button id="recentTab" class="side-action" type="button">
+            <span>最近练习</span>
+            <span id="recentCount" class="count">0</span>
+          </button>
           <button id="weakReviewTab" class="side-action" type="button">
             <span>弱项复习</span>
             <span id="mistakeCount" class="count">0</span>
@@ -183,6 +196,18 @@
           </div>
           <div id="historySummary" class="history-summary"></div>
           <div id="historyList" class="history-list"></div>
+        </section>
+
+        <section id="libraryView" class="library-view" hidden>
+          <div class="library-head">
+            <div>
+              <p class="eyebrow">我的内容</p>
+              <h2 id="libraryTitle">我的收藏</h2>
+              <p id="libraryDescription"></p>
+            </div>
+            <button id="libraryRandomButton" class="solid-button" type="button">随机练习</button>
+          </div>
+          <div id="libraryList" class="library-list"></div>
         </section>
       </main>
     </div>
@@ -300,6 +325,7 @@
     <script src="./src/data.js"></script>
     <script src="./src/fun-data.js"></script>
     <script src="./src/utils.js"></script>
+    <script src="./src/content-library.js"></script>
     <script src="./src/fun-typing.js"></script>
     <script src="./src/detective-state.js"></script>
     <script src="./src/annotations.js"></script>

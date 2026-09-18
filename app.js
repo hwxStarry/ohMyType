@@ -2,13 +2,16 @@
 const {
   ACTIVE_KEY,
   CATEGORIES,
+  FAVORITES_KEY,
   MAX_CUSTOM_LENGTH,
   MODE_KEY,
   PRACTICE_MODES,
+  RECENTS_KEY,
   SIDEBAR_KEY,
   branchingStories,
   completionSounds,
   createCompletionAudio,
+  createContentLibrary,
   createDetectiveState,
   createTypingState,
   defaultContents,
@@ -29,6 +32,7 @@ const {
   readOpenCategories,
   readPracticeHistory,
   renderKeyboard,
+  searchContents,
   summarizeBody,
   writeCustomContents,
   writeOpenCategories
@@ -43,6 +47,7 @@ const el = {
   closeEdit: qs('#closeEdit'),
   closeSound: qs('#closeSound'),
   contentList: qs('#contentList'),
+  contentSearch: qs('#contentSearch'),
   currentCategory: qs('#currentCategory'),
   currentTitle: qs('#currentTitle'),
   customCategory: qs('#customCategory'),
@@ -57,6 +62,8 @@ const el = {
   funContent: qs('#funContent'),
   funModesTab: qs('#funModesTab'),
   funView: qs('#funView'),
+  favoriteCount: qs('#favoriteCount'),
+  favoriteTab: qs('#favoriteTab'),
   gameLinks: qs('#gameLinks'),
   gamesCount: qs('#gamesCount'),
   gamesTab: qs('#gamesTab'),
@@ -66,6 +73,11 @@ const el = {
   historySummary: qs('#historySummary'),
   historyTab: qs('#historyTab'),
   historyView: qs('#historyView'),
+  libraryDescription: qs('#libraryDescription'),
+  libraryList: qs('#libraryList'),
+  libraryRandomButton: qs('#libraryRandomButton'),
+  libraryTitle: qs('#libraryTitle'),
+  libraryView: qs('#libraryView'),
   mistakeCount: qs('#mistakeCount'),
   mobileSidebarToggle: qs('#mobileSidebarToggle'),
   nextButton: qs('#nextButton'),
@@ -75,6 +87,9 @@ const el = {
   progress: qs('#progress'),
   progressBar: qs('#progressBar'),
   resetButton: qs('#resetButton'),
+  randomContentButton: qs('#randomContentButton'),
+  recentCount: qs('#recentCount'),
+  recentTab: qs('#recentTab'),
   resultAccuracy: qs('#resultAccuracy'),
   resultCpm: qs('#resultCpm'),
   resultDuration: qs('#resultDuration'),
@@ -120,7 +135,15 @@ let funKeyboardOpen = getDefaultFunKeyboardOpen(window.innerWidth)
 let funKeyboardNextChars = []
 let funTypedValue = ''
 let funCandidates = []
+let contentSearchQuery = ''
+let activeLibrary = 'favorites'
+let favoriteIds = new Set()
 const completionAudio = createCompletionAudio()
+const contentLibrary = createContentLibrary({
+  storage: localStorage,
+  favoritesKey: FAVORITES_KEY,
+  recentsKey: RECENTS_KEY
+})
 
 applyDefaultUiMigration()
 
@@ -285,10 +308,13 @@ const typing = createTypingState({
 })
 
 function renderContentList() {
-  const contents = getContents()
+  favoriteIds = new Set(contentLibrary.readFavoriteIds())
+  const contents = searchContents(getContents(), contentSearchQuery)
   const openCategories = readOpenCategories()
   el.gamesCount.textContent = String(games.length)
   el.historyCount.textContent = String(readPracticeHistory().length)
+  el.favoriteCount.textContent = String(favoriteIds.size)
+  el.recentCount.textContent = String(contentLibrary.readRecentIds().length)
   const weakMistakes = getWeakMistakeEntries()
   el.mistakeCount.textContent = String(weakMistakes.length)
   el.weakReviewTab.disabled = weakMistakes.length === 0
@@ -310,13 +336,16 @@ function renderContentList() {
     items: contents.filter(item => item.category === category)
   })).filter(group => group.items.length > 0)
 
-  el.contentList.innerHTML = [
+  const groupsHtml = [
     ...regularGroups.map(group => renderCategoryGroup(group, openCategories)),
     renderProgrammingCategoryGroup(programmingGroups, openCategories),
     renderDialogueCategoryGroup(dialogueGroups, openCategories)
   ].filter(Boolean).join('')
+  el.contentList.innerHTML = groupsHtml || '<p class="content-search-empty">没有找到匹配的练习</p>'
 
   bindContentListEvents()
+  el.favoriteTab.classList.toggle('active', activeView === 'library' && activeLibrary === 'favorites')
+  el.recentTab.classList.toggle('active', activeView === 'library' && activeLibrary === 'recents')
   el.gamesTab.classList.toggle('active', activeView === 'games')
   el.historyTab.classList.toggle('active', activeView === 'history')
   el.storyTab.classList.toggle('active', activeView === 'story')
@@ -327,7 +356,7 @@ function renderContentList() {
 function renderProgrammingCategoryGroup(groups, openCategories) {
   if (!groups.length) return ''
   const total = groups.reduce((sum, group) => sum + group.items.length, 0)
-  const isOpen = openCategories.has(PROGRAMMING_ROOT_CATEGORY)
+  const isOpen = Boolean(contentSearchQuery) || openCategories.has(PROGRAMMING_ROOT_CATEGORY)
   return `
     <section class="category-group programming-category-group">
       <button class="category-toggle" type="button" data-category="${PROGRAMMING_ROOT_CATEGORY}" aria-expanded="${isOpen}">
@@ -343,7 +372,7 @@ function renderProgrammingCategoryGroup(groups, openCategories) {
 }
 
 function renderProgrammingSubgroup(group, openCategories) {
-  const isOpen = openCategories.has(group.category)
+  const isOpen = Boolean(contentSearchQuery) || openCategories.has(group.category)
   const title = group.category.replace(PROGRAMMING_CATEGORY_PREFIX, '')
   return `
     <section class="category-subgroup">
@@ -360,7 +389,7 @@ function renderProgrammingSubgroup(group, openCategories) {
 }
 
 function renderCategoryGroup(group, openCategories) {
-  const isOpen = openCategories.has(group.category)
+  const isOpen = Boolean(contentSearchQuery) || openCategories.has(group.category)
   return `
     <section class="category-group">
       <button class="category-toggle" type="button" data-category="${escapeHtml(group.category)}" aria-expanded="${isOpen}">
@@ -378,7 +407,7 @@ function renderCategoryGroup(group, openCategories) {
 function renderDialogueCategoryGroup(groups, openCategories) {
   if (!groups.length) return ''
   const total = groups.reduce((sum, group) => sum + group.items.length, 0)
-  const isOpen = openCategories.has(DIALOGUE_ROOT_CATEGORY)
+  const isOpen = Boolean(contentSearchQuery) || openCategories.has(DIALOGUE_ROOT_CATEGORY)
   return `
     <section class="category-group dialogue-category-group">
       <button class="category-toggle" type="button" data-category="${DIALOGUE_ROOT_CATEGORY}" aria-expanded="${isOpen}">
@@ -394,7 +423,7 @@ function renderDialogueCategoryGroup(groups, openCategories) {
 }
 
 function renderDialogueSubgroup(group, openCategories) {
-  const isOpen = openCategories.has(group.category)
+  const isOpen = Boolean(contentSearchQuery) || openCategories.has(group.category)
   const title = group.category.replace(DIALOGUE_CATEGORY_PREFIX, '')
   return `
     <section class="category-subgroup">
@@ -415,12 +444,13 @@ function renderContentItem(item) {
     <button class="content-item ${item.id === activeId && activeView === 'practice' ? 'active' : ''}" type="button" data-id="${item.id}">
       <span class="content-main">
         <strong>${escapeHtml(item.title)}</strong>
-        ${item.isCustom && !item.isGenerated ? `
-          <span class="content-actions">
+        <span class="content-actions">
+          <span class="favorite-content ${favoriteIds.has(item.id) ? 'active' : ''}" role="button" tabindex="0" data-favorite-id="${item.id}" aria-label="${favoriteIds.has(item.id) ? '取消收藏' : '收藏'} ${escapeHtml(item.title)}" title="${favoriteIds.has(item.id) ? '取消收藏' : '收藏'}">${favoriteIds.has(item.id) ? '★' : '☆'}</span>
+          ${item.isCustom && !item.isGenerated ? `
             <span class="edit-content" role="button" tabindex="0" data-edit-id="${item.id}" aria-label="编辑 ${escapeHtml(item.title)}" title="编辑">✎</span>
             <span class="delete-content" role="button" tabindex="0" data-delete-id="${item.id}" aria-label="删除 ${escapeHtml(item.title)}" title="删除">×</span>
-          </span>
-        ` : ''}
+          ` : ''}
+        </span>
       </span>
       <small>${item.body.length} 字符</small>
       <em>${escapeHtml(summarizeBody(item.body))}</em>
@@ -465,6 +495,10 @@ function bindContentListEvents() {
   el.contentList.querySelectorAll('.edit-content').forEach(button => {
     bindActionButton(button, event => editCustomContent(event, button.dataset.editId))
   })
+
+  el.contentList.querySelectorAll('.favorite-content').forEach(button => {
+    bindActionButton(button, event => toggleFavorite(event, button.dataset.favoriteId))
+  })
 }
 
 function bindActionButton(button, handler) {
@@ -479,11 +513,19 @@ function selectContent(id) {
   activeView = 'practice'
   activeId = id
   localStorage.setItem(ACTIVE_KEY, activeId)
+  contentLibrary.recordRecent(activeId)
   typing.reset()
   resetTextScroll()
   render()
   closeMobileSidebar()
   focusTypingInput(true)
+}
+
+function toggleFavorite(event, id) {
+  event.preventDefault()
+  event.stopPropagation()
+  contentLibrary.toggleFavorite(id)
+  render()
 }
 
 function removeCustomContent(event, id) {
@@ -749,12 +791,78 @@ function resetTextScroll() {
   el.textSection.scrollTop = 0
 }
 
+function getContentsByIds(ids) {
+  const contentsById = new Map(getContents().map(item => [item.id, item]))
+  return ids.map(id => contentsById.get(id)).filter(Boolean)
+}
+
+function getActiveLibraryContents() {
+  const ids = activeLibrary === 'favorites'
+    ? contentLibrary.readFavoriteIds()
+    : contentLibrary.readRecentIds()
+  return getContentsByIds(ids)
+}
+
+function renderLibraryItem(item) {
+  const isFavorite = favoriteIds.has(item.id)
+  return `
+    <article class="library-item" data-library-id="${item.id}">
+      <button class="library-open" type="button" data-library-open="${item.id}">
+        <span class="library-category">${escapeHtml(item.category)}</span>
+        <h3>${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(summarizeBody(item.body))}</p>
+      </button>
+      <button class="library-favorite ${isFavorite ? 'active' : ''}" type="button" data-library-favorite="${item.id}" aria-label="${isFavorite ? '取消收藏' : '收藏'} ${escapeHtml(item.title)}" title="${isFavorite ? '取消收藏' : '收藏'}">${isFavorite ? '★' : '☆'}</button>
+    </article>
+  `
+}
+
+function renderLibrary() {
+  const isFavorites = activeLibrary === 'favorites'
+  const contents = getActiveLibraryContents()
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = true
+  el.libraryView.hidden = false
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '我的练习'
+  el.currentTitle.textContent = isFavorites ? '我的收藏' : '最近练习'
+  el.libraryTitle.textContent = isFavorites ? '我的收藏' : '最近练习'
+  el.libraryDescription.textContent = isFavorites
+    ? '收藏想反复练习的内容，随时从这里开始。'
+    : '按最近打开顺序保留 12 个练习。'
+  el.libraryRandomButton.disabled = contents.length === 0
+  el.libraryList.innerHTML = contents.length
+    ? contents.map(renderLibraryItem).join('')
+    : `<p class="empty-state">${isFavorites ? '还没有收藏内容，可以点击练习旁的星标添加。' : '还没有最近练习，先从左侧选择一项吧。'}</p>`
+}
+
+function openLibrary(type) {
+  activeLibrary = type
+  activeView = 'library'
+  render()
+  closeMobileSidebar()
+}
+
+function startRandomPractice(contents) {
+  const next = contentLibrary.pickRandom(contents.filter(item => !item.isGenerated), activeId)
+  if (next) selectContent(next.id)
+}
+
+function startRandomFromCurrentCategory() {
+  const active = getActiveContent()
+  const contents = getContents().filter(item => item.category === active.category)
+  startRandomPractice(contents)
+}
+
 function renderPractice() {
   const active = getActiveContent()
   el.practiceView.hidden = false
   el.gamesView.hidden = true
   el.historyView.hidden = true
   el.funView.hidden = true
+  el.libraryView.hidden = true
   setPracticeControlsVisible(true)
   el.currentCategory.textContent = active.category
   el.currentTitle.textContent = active.title
@@ -768,6 +876,7 @@ function renderGames() {
   el.gamesView.hidden = false
   el.historyView.hidden = true
   el.funView.hidden = true
+  el.libraryView.hidden = true
   setPracticeControlsVisible(false)
   el.currentCategory.textContent = '游戏'
   el.currentTitle.textContent = '打字游戏'
@@ -822,6 +931,7 @@ function renderHistory() {
   el.gamesView.hidden = true
   el.historyView.hidden = false
   el.funView.hidden = true
+  el.libraryView.hidden = true
   setPracticeControlsVisible(false)
   el.currentCategory.textContent = '记录'
   el.currentTitle.textContent = '练习历史'
@@ -864,6 +974,7 @@ function renderFunHub() {
   el.gamesView.hidden = true
   el.historyView.hidden = true
   el.funView.hidden = false
+  el.libraryView.hidden = true
   setPracticeControlsVisible(false)
   el.currentCategory.textContent = '趣味'
   el.currentTitle.textContent = '全部玩法'
@@ -897,6 +1008,7 @@ function renderStory() {
   el.gamesView.hidden = true
   el.historyView.hidden = true
   el.funView.hidden = false
+  el.libraryView.hidden = true
   setPracticeControlsVisible(false)
   el.currentCategory.textContent = '剧情分支'
   el.currentTitle.textContent = activeStory.title
@@ -1096,6 +1208,7 @@ function renderDetective() {
   el.gamesView.hidden = true
   el.historyView.hidden = true
   el.funView.hidden = false
+  el.libraryView.hidden = true
   setPracticeControlsVisible(false)
   el.currentCategory.textContent = '侦探解谜'
   el.currentTitle.textContent = activeDetectiveCase.title
@@ -1171,6 +1284,7 @@ function render() {
   renderContentList()
   if (activeView === 'games') renderGames()
   else if (activeView === 'history') renderHistory()
+  else if (activeView === 'library') renderLibrary()
   else if (activeView === 'fun') renderFunHub()
   else if (activeView === 'story') renderStory()
   else if (activeView === 'detective') renderDetective()
@@ -1309,6 +1423,7 @@ function startNextPractice() {
   if (next) {
     activeId = next.id
     localStorage.setItem(ACTIVE_KEY, activeId)
+    contentLibrary.recordRecent(activeId)
   }
   activeView = 'practice'
   typing.reset()
@@ -1406,6 +1521,24 @@ function bindEvents() {
         if (section !== currentSection) section.open = false
       })
     })
+  })
+
+  el.contentSearch.addEventListener('input', () => {
+    contentSearchQuery = el.contentSearch.value.trim()
+    renderContentList()
+  })
+  el.randomContentButton.addEventListener('click', startRandomFromCurrentCategory)
+  el.favoriteTab.addEventListener('click', () => openLibrary('favorites'))
+  el.recentTab.addEventListener('click', () => openLibrary('recents'))
+  el.libraryRandomButton.addEventListener('click', () => startRandomPractice(getActiveLibraryContents()))
+  el.libraryList.addEventListener('click', event => {
+    const favoriteButton = event.target.closest('[data-library-favorite]')
+    if (favoriteButton) {
+      toggleFavorite(event, favoriteButton.dataset.libraryFavorite)
+      return
+    }
+    const item = event.target.closest('[data-library-open], [data-library-id]')
+    if (item) selectContent(item.dataset.libraryOpen || item.dataset.libraryId)
   })
 
   el.typingInput.addEventListener('input', () => {
