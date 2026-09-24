@@ -119,6 +119,7 @@ const completionSounds = [
 ]
 
 const SOUND_KEY = 'ohmytype_completion_sound'
+const MEMORY_SOUND_KEY = 'ohmytype_memory_sound'
 const DEFAULT_SOUND_ID = 'keyboard-single'
 
 function readSoundSettings() {
@@ -281,11 +282,79 @@ function createCompletionAudio() {
   return { getSettings, play, preview, setSettings }
 }
 
+function createMemoryAudio() {
+  let enabled = localStorage.getItem(MEMORY_SOUND_KEY) !== '0'
+  let audioContext = null
+
+  function getAudioContext() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return null
+    if (!audioContext) audioContext = new AudioContext()
+    return audioContext
+  }
+
+  function unlock() {
+    if (!enabled) return
+    const context = getAudioContext()
+    if (context?.state === 'suspended') context.resume().catch(() => {})
+  }
+
+  function tone(frequency, duration = 0.08, gainValue = 0.035, delay = 0, type = 'sine') {
+    if (!enabled) return
+    const context = getAudioContext()
+    if (!context) return
+    if (context.state === 'suspended') context.resume().catch(() => {})
+    const start = context.currentTime + delay
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    oscillator.type = type
+    oscillator.frequency.setValueAtTime(frequency, start)
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(gainValue, start + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(start)
+    oscillator.stop(start + duration + 0.02)
+  }
+
+  function playTick(urgent = false) {
+    tone(urgent ? 880 : 620, urgent ? 0.1 : 0.055, urgent ? 0.045 : 0.025, 0, urgent ? 'square' : 'sine')
+  }
+
+  function playTimeout() {
+    tone(330, 0.12, 0.055, 0, 'square')
+    tone(165, 0.2, 0.06, 0.11, 'sawtooth')
+  }
+
+  function playTransition() {
+    tone(523, 0.055, 0.028, 0, 'triangle')
+    tone(784, 0.08, 0.03, 0.06, 'triangle')
+  }
+
+  function getEnabled() {
+    return enabled
+  }
+
+  function setEnabled(nextEnabled) {
+    enabled = Boolean(nextEnabled)
+    localStorage.setItem(MEMORY_SOUND_KEY, enabled ? '1' : '0')
+    if (enabled) {
+      unlock()
+      playTransition()
+    }
+  }
+
+  return { getEnabled, playTick, playTimeout, playTransition, setEnabled, unlock }
+}
+
 Object.assign(window.OhMyType, {
   DEFAULT_SOUND_ID,
+  MEMORY_SOUND_KEY,
   SOUND_KEY,
   completionSounds,
   createCompletionAudio,
+  createMemoryAudio,
   readSoundSettings,
   writeSoundSettings
 })

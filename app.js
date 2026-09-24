@@ -14,6 +14,7 @@ const {
   branchingStories,
   completionSounds,
   createCompletionAudio,
+  createMemoryAudio,
   createContentLibrary,
   createDetectiveState,
   createMemorySession,
@@ -152,7 +153,9 @@ let memoryTypedValue = ''
 let memoryRevealTimeout = 0
 let memoryShowPinyin = localStorage.getItem(MEMORY_PINYIN_KEY) === '1'
 let memoryComparison = null
+let memoryLastTickKey = ''
 const completionAudio = createCompletionAudio()
+const memoryAudio = createMemoryAudio()
 const contentLibrary = createContentLibrary({
   storage: localStorage,
   favoritesKey: FAVORITES_KEY,
@@ -1063,14 +1066,17 @@ function openMemory() {
   memorySession = null
   memoryTypedValue = ''
   memoryComparison = null
+  memoryLastTickKey = ''
   activeView = 'memory'
   render()
   closeMobileSidebar()
 }
 
 function startMemoryRound() {
+  memoryAudio.unlock()
   memoryTypedValue = ''
   memoryComparison = null
+  memoryLastTickKey = ''
   memorySession = createMemorySession({
     prompts: createSharedMemoryPrompts(memoryPrompts, getContents()),
     type: memoryType,
@@ -1085,12 +1091,16 @@ function beginMemoryInput() {
   window.clearTimeout(memoryRevealTimeout)
   memorySession.beginInput()
   memoryTypedValue = ''
+  memoryLastTickKey = ''
+  memoryAudio.playTransition()
   render()
   requestAnimationFrame(() => qs('#memoryInput', el.funContent)?.focus({ preventScroll: true }))
 }
 
-function submitMemoryAttempt() {
+function submitMemoryAttempt(timedOut = false) {
   if (!memorySession || memorySession.getState().phase !== 'input') return
+  window.clearTimeout(memoryRevealTimeout)
+  if (timedOut) memoryAudio.playTimeout()
   const result = memorySession.submit(memoryTypedValue)
   if (!result) return
   memoryTypedValue = ''
@@ -1098,6 +1108,8 @@ function submitMemoryAttempt() {
   if (state.phase === 'complete') {
     saveMemoryResult(state.summary)
     if (state.summary.accuracy === 100) completionAudio.play()
+  } else {
+    memoryAudio.playTransition()
   }
   render()
 }
@@ -1122,6 +1134,30 @@ function formatMemoryDelta(value, suffix) {
   return `较上次 ${value > 0 ? '+' : ''}${value}${suffix}`
 }
 
+function renderMemoryClock(state, phase) {
+  const inputPhase = phase === 'input'
+  return `
+    <div class="memory-countdown memory-clock memory-clock--${phase}" style="--clock-duration: ${Math.max(1, state.remainingMilliseconds)}ms">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="memory-clock-track" cx="24" cy="24" r="20" pathLength="100"></circle>
+        <circle class="memory-clock-progress" cx="24" cy="24" r="20" pathLength="100"></circle>
+        <line class="memory-clock-hand" x1="24" y1="24" x2="24" y2="11"></line>
+        <circle class="memory-clock-pin" cx="24" cy="24" r="2"></circle>
+      </svg>
+      <div><strong id="memoryCountdown">${state.remainingSeconds}</strong><span>${inputPhase ? '秒内完成' : '秒后隐藏'}</span></div>
+    </div>
+  `
+}
+
+function syncMemoryCountdownSound(state) {
+  if (!['reveal', 'input'].includes(state.phase) || state.remainingSeconds <= 0) return
+  const shouldTick = state.phase === 'reveal' || state.remainingSeconds <= 5
+  const key = `${state.phase}:${state.index}:${state.remainingSeconds}`
+  if (!shouldTick || memoryLastTickKey === key) return
+  memoryLastTickKey = key
+  memoryAudio.playTick(state.remainingSeconds <= 3)
+}
+
 function scheduleMemoryReveal(state) {
   window.clearTimeout(memoryRevealTimeout)
   const session = memorySession
@@ -1130,6 +1166,17 @@ function scheduleMemoryReveal(state) {
     const current = memorySession?.getState()
     if (activeView !== 'memory' || memorySession !== session || current?.phase !== 'reveal' || current.index !== index) return
     beginMemoryInput()
+  }, state.remainingMilliseconds)
+}
+
+function scheduleMemoryInput(state) {
+  window.clearTimeout(memoryRevealTimeout)
+  const session = memorySession
+  const index = state.index
+  memoryRevealTimeout = window.setTimeout(() => {
+    const current = memorySession?.getState()
+    if (activeView !== 'memory' || memorySession !== session || current?.phase !== 'input' || current.index !== index) return
+    submitMemoryAttempt(true)
   }, state.remainingMilliseconds)
 }
 
@@ -1153,12 +1200,16 @@ function renderMemorySetup() {
           <input id="memoryPinyinToggle" type="checkbox" ${memoryShowPinyin ? 'checked' : ''} />
           <span><strong>显示拼音</strong><small>成语、诗词和中文短句在记忆阶段显示无声调拼音。</small></span>
         </label>
+        <label class="memory-pinyin-option">
+          <input id="memorySoundToggle" type="checkbox" ${memoryAudio.getEnabled() ? 'checked' : ''} />
+          <span><strong>游戏音效</strong><small>倒计时、时间到和题目切换时播放提示音。</small></span>
+        </label>
         <h3>选择难度</h3>
         <div class="memory-difficulty-grid">
           ${MEMORY_DIFFICULTIES.map(item => `
             <button class="memory-difficulty ${memoryDifficulty === item.id ? 'active' : ''}" type="button" data-memory-difficulty="${item.id}">
               <strong>${escapeHtml(item.title)}</strong>
-              <span>${item.roundCount} 题 · ${item.revealSeconds} 秒</span>
+              <span>${item.roundCount} 题 · 记 ${item.revealSeconds}s · 答 ${item.inputSeconds}s</span>
               <small>${escapeHtml(item.description)}</small>
             </button>
           `).join('')}
@@ -1196,11 +1247,12 @@ function renderMemory() {
     el.funContent.innerHTML = `
       <div class="memory-shell memory-stage">
         <p class="eyebrow">${escapeHtml(state.prompt.type)} · ${escapeHtml(state.difficulty.title)} · 第 ${state.index + 1} / ${state.total} 题</p>
-        <div class="memory-countdown"><strong id="memoryCountdown">${state.remainingSeconds}</strong><span>秒后隐藏</span></div>
+        ${renderMemoryClock(state, 'reveal')}
         <div class="memory-target ${memoryShowPinyin ? 'with-pinyin' : ''}" aria-label="需要记忆的内容">${renderMemoryTarget(state.prompt.text)}</div>
         <p class="memory-tip">倒计时结束后会自动隐藏并进入输入，不需要点击。</p>
       </div>
     `
+    syncMemoryCountdownSound(state)
     scheduleMemoryReveal(state)
     return
   }
@@ -1209,14 +1261,17 @@ function renderMemory() {
     el.funContent.innerHTML = `
       <div class="memory-shell memory-stage">
         <p class="eyebrow">原文已隐藏 · 第 ${state.index + 1} / ${state.total} 题</p>
+        ${renderMemoryClock(state, 'input')}
         <div class="memory-hidden-mark" aria-hidden="true">••••••</div>
         <div id="memoryTypedPreview" class="memory-typed-preview" aria-live="polite">${renderMemoryTypedValue()}</div>
         <label class="memory-input-label" for="memoryInput">输入你记住的内容</label>
         <textarea id="memoryInput" class="memory-input" rows="1" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="在这里输入…">${escapeHtml(memoryTypedValue)}</textarea>
-        <p class="memory-tip">输入完成后按 Enter，下一题会立即出现。输入法选词时的回车不会误提交。</p>
+        <p class="memory-tip">输入完成后按 Enter；倒计时结束会自动提交并进入下一题。输入法选词时的回车不会误提交。</p>
         <button class="solid-button" type="button" data-submit-memory>提交并进入下一题</button>
       </div>
     `
+    syncMemoryCountdownSound(state)
+    scheduleMemoryInput(state)
     requestAnimationFrame(() => qs('#memoryInput', el.funContent)?.focus({ preventScroll: true }))
     return
   }
@@ -1246,11 +1301,11 @@ function renderMemory() {
       </div>
       <div class="memory-attempt-list">
         ${state.attempts.map((attempt, index) => `
-          <article class="memory-attempt ${attempt.perfect ? 'perfect' : ''}">
+          <article class="memory-attempt ${attempt.perfect ? 'perfect' : ''} ${attempt.timedOut ? 'timed-out' : ''}">
             <span>${index + 1}</span>
             <div><small>原文</small><strong>${escapeHtml(attempt.target)}</strong></div>
             <div><small>输入</small><strong>${escapeHtml(attempt.typed || '（未输入）')}</strong></div>
-            <em>${attempt.perfect ? '正确' : `错 ${attempt.wrong} · 漏 ${attempt.omitted} · 序 ${attempt.orderErrors}`}</em>
+            <em>${attempt.timedOut ? `超时 · 错 ${attempt.wrong} · 漏 ${attempt.omitted}` : attempt.perfect ? '正确' : `错 ${attempt.wrong} · 漏 ${attempt.omitted} · 序 ${attempt.orderErrors}`}</em>
           </article>
         `).join('')}
       </div>
@@ -1914,9 +1969,11 @@ function bindEvents() {
     }
   })
   el.funContent.addEventListener('change', event => {
-    if (!event.target.matches('#memoryPinyinToggle')) return
-    memoryShowPinyin = event.target.checked
-    localStorage.setItem(MEMORY_PINYIN_KEY, memoryShowPinyin ? '1' : '0')
+    if (event.target.matches('#memoryPinyinToggle')) {
+      memoryShowPinyin = event.target.checked
+      localStorage.setItem(MEMORY_PINYIN_KEY, memoryShowPinyin ? '1' : '0')
+    }
+    if (event.target.matches('#memorySoundToggle')) memoryAudio.setEnabled(event.target.checked)
   })
   el.funContent.addEventListener('compositionstart', event => {
     if (event.target.matches('#funTypingInput')) event.target.dataset.composing = '1'
@@ -2033,10 +2090,15 @@ Object.assign(window.OhMyType, { renderFunKeyboard, toggleFunKeyboard })
 bindEvents()
 render()
 durationTimer = window.setInterval(() => {
-  if (activeView === 'memory' && memorySession?.getState().phase === 'reveal') {
+  if (activeView === 'memory' && ['reveal', 'input'].includes(memorySession?.getState().phase)) {
     const state = memorySession.getState()
     const countdown = qs('#memoryCountdown', el.funContent)
     if (countdown) countdown.textContent = String(state.remainingSeconds)
+    syncMemoryCountdownSound(state)
+    if (state.remainingMilliseconds <= 0) {
+      if (state.phase === 'reveal') beginMemoryInput()
+      else submitMemoryAttempt(true)
+    }
     return
   }
   if (activeView !== 'practice' || typing.isFinished) return

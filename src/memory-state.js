@@ -2,9 +2,9 @@
 window.OhMyType = window.OhMyType || {}
 
 const MEMORY_DIFFICULTIES = [
-  { id: 'easy', title: '简单', revealSeconds: 5, roundCount: 5, description: '每组 5 题，每题自动显示 5 秒。' },
-  { id: 'normal', title: '普通', revealSeconds: 3, roundCount: 10, description: '每组 10 题，每题自动显示 3 秒。' },
-  { id: 'hard', title: '困难', revealSeconds: 1, roundCount: 15, description: '每组 15 题，每题仅显示 1 秒。' }
+  { id: 'easy', title: '简单', revealSeconds: 5, inputSeconds: 15, roundCount: 5, description: '每组 5 题，记忆 5 秒，输入 15 秒。' },
+  { id: 'normal', title: '普通', revealSeconds: 3, inputSeconds: 10, roundCount: 10, description: '每组 10 题，记忆 3 秒，输入 10 秒。' },
+  { id: 'hard', title: '困难', revealSeconds: 1, inputSeconds: 6, roundCount: 15, description: '每组 15 题，记忆 1 秒，输入 6 秒。' }
 ]
 
 function countChars(chars) {
@@ -44,6 +44,7 @@ function createMemoryRound({ prompt, difficulty = 'normal', now = Date.now() }) 
   const difficultyConfig = MEMORY_DIFFICULTIES.find(item => item.id === difficulty) || MEMORY_DIFFICULTIES[1]
   let phase = 'reveal'
   let inputStartedAt = 0
+  let inputEndsAt = 0
   let result = null
   const revealEndsAt = now + difficultyConfig.revealSeconds * 1000
 
@@ -54,8 +55,14 @@ function createMemoryRound({ prompt, difficulty = 'normal', now = Date.now() }) 
       difficulty: difficultyConfig,
       remainingSeconds: phase === 'reveal'
         ? Math.max(0, Math.ceil((revealEndsAt - currentTime) / 1000))
-        : 0,
-      remainingMilliseconds: phase === 'reveal' ? Math.max(0, revealEndsAt - currentTime) : 0,
+        : phase === 'input'
+          ? Math.max(0, Math.ceil((inputEndsAt - currentTime) / 1000))
+          : 0,
+      remainingMilliseconds: phase === 'reveal'
+        ? Math.max(0, revealEndsAt - currentTime)
+        : phase === 'input'
+          ? Math.max(0, inputEndsAt - currentTime)
+          : 0,
       result
     }
   }
@@ -64,6 +71,7 @@ function createMemoryRound({ prompt, difficulty = 'normal', now = Date.now() }) 
     if (phase !== 'reveal') return getState(currentTime)
     phase = 'input'
     inputStartedAt = currentTime
+    inputEndsAt = currentTime + difficultyConfig.inputSeconds * 1000
     return getState(currentTime)
   }
 
@@ -71,7 +79,8 @@ function createMemoryRound({ prompt, difficulty = 'normal', now = Date.now() }) 
     if (phase !== 'input') return result
     result = {
       ...analyzeMemoryAttempt(prompt.text, value),
-      durationSeconds: Math.max(1, Math.ceil((currentTime - inputStartedAt) / 1000))
+      durationSeconds: Math.min(difficultyConfig.inputSeconds, Math.max(1, Math.ceil((currentTime - inputStartedAt) / 1000))),
+      timedOut: currentTime >= inputEndsAt
     }
     phase = 'result'
     return result
@@ -134,6 +143,7 @@ function createMemorySession({ prompts, type, difficulty = 'normal', now = Date.
   let phase = queue.length ? 'reveal' : 'complete'
   let index = 0
   let inputStartedAt = 0
+  let inputEndsAt = 0
   let revealEndsAt = now + difficultyConfig.revealSeconds * 1000
   const attempts = []
 
@@ -147,8 +157,14 @@ function createMemorySession({ prompts, type, difficulty = 'normal', now = Date.
       attempts: attempts.slice(),
       remainingSeconds: phase === 'reveal'
         ? Math.max(0, Math.ceil((revealEndsAt - currentTime) / 1000))
-        : 0,
-      remainingMilliseconds: phase === 'reveal' ? Math.max(0, revealEndsAt - currentTime) : 0,
+        : phase === 'input'
+          ? Math.max(0, Math.ceil((inputEndsAt - currentTime) / 1000))
+          : 0,
+      remainingMilliseconds: phase === 'reveal'
+        ? Math.max(0, revealEndsAt - currentTime)
+        : phase === 'input'
+          ? Math.max(0, inputEndsAt - currentTime)
+          : 0,
       summary: phase === 'complete' ? summarizeAttempts(attempts) : null
     }
   }
@@ -157,6 +173,7 @@ function createMemorySession({ prompts, type, difficulty = 'normal', now = Date.
     if (phase !== 'reveal') return getState(currentTime)
     phase = 'input'
     inputStartedAt = currentTime
+    inputEndsAt = currentTime + difficultyConfig.inputSeconds * 1000
     return getState(currentTime)
   }
 
@@ -165,7 +182,8 @@ function createMemorySession({ prompts, type, difficulty = 'normal', now = Date.
     const result = {
       ...analyzeMemoryAttempt(queue[index].text, value),
       prompt: queue[index],
-      durationSeconds: Math.max(1, Math.ceil((currentTime - inputStartedAt) / 1000))
+      durationSeconds: Math.min(difficultyConfig.inputSeconds, Math.max(1, Math.ceil((currentTime - inputStartedAt) / 1000))),
+      timedOut: currentTime >= inputEndsAt
     }
     attempts.push(result)
     if (index >= queue.length - 1) {

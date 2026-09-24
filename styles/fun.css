@@ -441,15 +441,91 @@
 
 .memory-countdown {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 14px;
+  margin: 14px 0;
   color: var(--zinc-400);
+}
+
+.memory-countdown svg {
+  width: 58px;
+  height: 58px;
+  overflow: visible;
+}
+
+.memory-countdown > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .memory-countdown strong {
   color: #93c5fd;
   font-size: 42px;
+}
+
+.memory-clock-track,
+.memory-clock-progress {
+  fill: rgba(15, 23, 42, 0.4);
+  stroke-width: 3;
+}
+
+.memory-clock-track {
+  stroke: rgba(148, 163, 184, 0.18);
+}
+
+.memory-clock-progress {
+  fill: none;
+  stroke: #60a5fa;
+  stroke-dasharray: 100;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  animation: memory-clock-drain var(--clock-duration) linear forwards;
+}
+
+.memory-clock-hand {
+  stroke: #bfdbfe;
+  stroke-linecap: round;
+  stroke-width: 2;
+  transform-origin: 24px 24px;
+  animation: memory-clock-turn var(--clock-duration) linear forwards;
+}
+
+.memory-clock-pin {
+  fill: #dbeafe;
+}
+
+.memory-clock--input strong {
+  color: #fbbf24;
+}
+
+.memory-clock--input .memory-clock-progress {
+  stroke: #f59e0b;
+}
+
+.memory-clock--input .memory-clock-hand {
+  stroke: #fde68a;
+}
+
+.memory-clock--input .memory-clock-pin {
+  fill: #fef3c7;
+}
+
+@keyframes memory-clock-drain {
+  to { stroke-dashoffset: 100; }
+}
+
+@keyframes memory-clock-turn {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-clock-progress,
+  .memory-clock-hand {
+    animation: none;
+  }
 }
 
 .memory-target {
@@ -691,6 +767,10 @@
 
 .memory-attempt.perfect em {
   color: #86efac;
+}
+
+.memory-attempt.timed-out em {
+  color: #fbbf24;
 }
 
 @media (max-width: 700px) {
