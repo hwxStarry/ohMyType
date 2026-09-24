@@ -21,7 +21,7 @@ const funModes = [
     icon: '◉',
     title: '记忆闪打',
     description: '文字短暂出现后消失，凭记忆完整输入。',
-    status: 'soon'
+    status: 'playable'
   },
   {
     id: 'idiom-chain',

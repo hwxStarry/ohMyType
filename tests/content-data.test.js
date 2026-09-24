@@ -3,6 +3,7 @@ const fs = require('node:fs')
 const vm = require('node:vm')
 
 const context = { window: { OhMyType: {} } }
+vm.runInNewContext(fs.readFileSync('src/memory-data.js', 'utf8'), context)
 vm.runInNewContext(fs.readFileSync('src/data.js', 'utf8'), context)
 
 const contents = context.window.OhMyType.defaultContents
@@ -11,7 +12,7 @@ const countByCategory = category => contents.filter(item => item.category === ca
 
 assert.equal(new Set(ids).size, ids.length, 'built-in content ids should be unique')
 assert.ok(countByCategory('拼音') >= 12, 'should provide a substantial pinyin course set')
-assert.ok(countByCategory('诗词') >= 20, 'should provide at least 20 public-domain poems')
+assert.ok(countByCategory('诗词') >= 319, 'should share the complete Tang 300 poetry library')
 assert.ok(countByCategory('单词') >= 14, 'should provide varied vocabulary sets')
 assert.ok(countByCategory('编程·JavaScript') >= 14, 'should provide substantial JavaScript drills')
 assert.ok(countByCategory('编程·Python') >= 12, 'should provide substantial Python drills')

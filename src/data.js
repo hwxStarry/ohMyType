@@ -1,5 +1,6 @@
 (() => {
 window.OhMyType = window.OhMyType || {}
+const { poetryPracticeContents = [] } = window.OhMyType
 
 function makeDialogueContent({ id, title, category, incomingRole = '员工', replyRole = '老板', messages }) {
   return {
@@ -30,7 +31,7 @@ function makeDialogueScenario({ pairs, ...options }) {
   })
 }
 
-const defaultContents = [
+const baseContents = [
   {
     id: 'pinyin-basic',
     title: '拼音入门',
@@ -1424,6 +1425,11 @@ const games = [
     description: '免费浏览器打字游戏目录，覆盖速度、动作、射击和轻量休闲玩法。',
     href: 'https://thetypinggames.com/free-typing-games'
   }
+]
+
+const defaultContents = [
+  ...baseContents.filter(item => item.category !== '诗词'),
+  ...poetryPracticeContents
 ]
 
 Object.assign(window.OhMyType, { defaultContents, games })

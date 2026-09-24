@@ -10,6 +10,8 @@ const CATEGORY_KEY = 'ohmytype_open_categories'
 const MODE_KEY = 'ohmytype_practice_mode'
 const FAVORITES_KEY = 'ohmytype_favorite_contents'
 const RECENTS_KEY = 'ohmytype_recent_contents'
+const MEMORY_RECORD_KEY = 'ohmytype_memory_records'
+const MEMORY_PINYIN_KEY = 'ohmytype_memory_pinyin'
 
 const MAX_CUSTOM_LENGTH = 745
 const CATEGORIES = ['拼音', '诗词', '文章', '文言文', '单词', '英语', '编程·JavaScript', '编程·Python', '编程·HTML', '编程·CSS', '对话·工作管理', '对话·客户沟通', '对话·面试问答', '对话·日常聊天', '对话·客服售后']
@@ -41,6 +43,8 @@ Object.assign(window.OhMyType, {
   FAVORITES_KEY,
   HISTORY_KEY,
   MAX_CUSTOM_LENGTH,
+  MEMORY_RECORD_KEY,
+  MEMORY_PINYIN_KEY,
   MISTAKE_KEY,
   MODE_KEY,
   PRACTICE_MODES,

@@ -12,6 +12,7 @@ assert.ok(branchingStories.length > 0)
 const { detectiveCases } = context.window.OhMyType
 assert.ok(Array.isArray(detectiveCases) && detectiveCases.length === 1)
 assert.ok(funModes.some(mode => mode.id === 'detective' && mode.status === 'playable'))
+assert.ok(funModes.some(mode => mode.id === 'memory' && mode.status === 'playable'))
 
 detectiveCases.forEach(caseItem => {
   assert.ok(caseItem.id && caseItem.title && caseItem.description)

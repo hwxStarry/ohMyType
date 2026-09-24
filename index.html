@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Oh My Type 是免费的中文在线打字练习工具，提供拼音、古诗词、文言文、文章、英文单词和对话打字练习，以及剧情分支、侦探解谜、键盘指法、速度与准确率测试、弱项复习和自定义文本。" />
-    <meta name="keywords" content="中文打字练习,在线打字练习,免费打字练习,在线练打字,电脑打字练习,键盘打字练习,汉字打字练习,新手打字练习,零基础打字练习,学生打字练习,无需登录打字练习,浏览器打字练习,键盘指法练习,盲打练习,标准指法练习,提高打字速度,打字速度测试,在线打字测速,中文打字速度测试,一分钟打字测试,30秒打字测试,打字准确率测试,拼音打字练习,汉语拼音打字练习,中文拼音练习,声母练习,韵母练习,古诗词打字,古诗打字练习,唐诗打字练习,诗词默写打字,文言文打字,论语打字练习,陋室铭打字练习,文章打字练习,自定义文章打字,粘贴文章打字,英文打字练习,英语单词打字,单词打字练习,英语四级单词打字,对话打字练习,职场对话打字练习,面试对话练习,客服话术打字,老板对话练习,剧情打字练习,剧情选择打字游戏,文字冒险打字游戏,侦探解谜打字,侦探推理打字游戏,趣味打字练习,中文打字小游戏,打字游戏,错字练习,弱项复习,打字错误统计,练习历史,本地打字记录,typing practice,pinyin typing,Chinese typing practice" />
+    <meta name="description" content="Oh My Type 是免费的中文在线打字练习工具，提供拼音、古诗词、文言文、文章、英文单词和对话打字练习，以及剧情分支、侦探解谜、记忆闪打、键盘指法、速度与准确率测试、弱项复习和自定义文本。" />
+    <meta name="keywords" content="中文打字练习,在线打字练习,免费打字练习,在线练打字,电脑打字练习,键盘打字练习,汉字打字练习,新手打字练习,零基础打字练习,学生打字练习,无需登录打字练习,浏览器打字练习,键盘指法练习,盲打练习,标准指法练习,提高打字速度,打字速度测试,在线打字测速,中文打字速度测试,一分钟打字测试,30秒打字测试,打字准确率测试,拼音打字练习,汉语拼音打字练习,中文拼音练习,声母练习,韵母练习,古诗词打字,古诗打字练习,唐诗打字练习,诗词默写打字,文言文打字,论语打字练习,陋室铭打字练习,文章打字练习,自定义文章打字,粘贴文章打字,英文打字练习,英语单词打字,单词打字练习,英语四级单词打字,对话打字练习,职场对话打字练习,面试对话练习,客服话术打字,老板对话练习,剧情打字练习,剧情选择打字游戏,文字冒险打字游戏,侦探解谜打字,侦探推理打字游戏,记忆闪打,记忆打字游戏,趣味打字练习,中文打字小游戏,打字游戏,错字练习,弱项复习,打字错误统计,练习历史,本地打字记录,typing practice,pinyin typing,Chinese typing practice" />
     <meta name="author" content="hwxStarry" />
     <meta name="application-name" content="Oh My Type 中文打字练习" />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
@@ -65,9 +65,9 @@
             <span>侦探解谜</span>
             <span class="count">玩</span>
           </button>
-          <button class="side-action" type="button" disabled title="即将上线">
+          <button id="memoryTab" class="side-action" type="button">
             <span>记忆闪打</span>
-            <span class="count">即将</span>
+            <span class="count">玩</span>
           </button>
           <button class="side-action" type="button" disabled title="即将上线">
             <span>成语接龙</span>
@@ -322,11 +322,13 @@
 
     <script src="./src/pinyin.js"></script>
     <script src="./src/constants.js"></script>
+    <script src="./src/memory-data.js"></script>
     <script src="./src/data.js"></script>
     <script src="./src/fun-data.js"></script>
     <script src="./src/utils.js"></script>
     <script src="./src/content-library.js"></script>
     <script src="./src/fun-typing.js"></script>
+    <script src="./src/memory-state.js"></script>
     <script src="./src/detective-state.js"></script>
     <script src="./src/annotations.js"></script>
     <script src="./src/storage.js"></script>
@@ -343,7 +345,7 @@
         "name": "Oh My Type",
         "url": "https://ohmytype.mozhe.cc/",
         "alternateName": "免费中文在线打字练习",
-        "description": "Oh My Type 是免费的中文在线打字练习工具，提供拼音、古诗词、文言文、文章、英文单词和对话打字练习，以及剧情分支、侦探解谜、键盘指法、速度与准确率测试、弱项复习和自定义文本。",
+        "description": "Oh My Type 是免费的中文在线打字练习工具，提供拼音、古诗词、文言文、文章、英文单词和对话打字练习，以及剧情分支、侦探解谜、记忆闪打、键盘指法、速度与准确率测试、弱项复习和自定义文本。",
         "keywords": [
           "中文打字练习",
           "在线打字练习",
@@ -371,6 +373,7 @@
           "文字冒险打字游戏",
           "侦探解谜打字",
           "侦探推理打字游戏",
+          "记忆闪打",
           "趣味打字练习",
           "打字速度测试",
           "中文打字速度测试",
@@ -381,7 +384,7 @@
         ],
         "featureList": [
           "中文、拼音、古诗词、文言文、文章和英文单词练习",
-          "对话打字、剧情分支和侦探解谜练习",
+          "对话打字、剧情分支、侦探解谜和记忆闪打练习",
           "键盘指法提示、打字速度与准确率统计",
           "自定义文本、弱项复习和本地练习历史"
         ],

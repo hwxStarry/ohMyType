@@ -4,6 +4,9 @@ const {
   CATEGORIES,
   FAVORITES_KEY,
   MAX_CUSTOM_LENGTH,
+  MEMORY_DIFFICULTIES,
+  MEMORY_PINYIN_KEY,
+  MEMORY_RECORD_KEY,
   MODE_KEY,
   PRACTICE_MODES,
   RECENTS_KEY,
@@ -13,6 +16,8 @@ const {
   createCompletionAudio,
   createContentLibrary,
   createDetectiveState,
+  createMemorySession,
+  createSharedMemoryPrompts,
   createTypingState,
   defaultContents,
   detectiveCases,
@@ -26,6 +31,7 @@ const {
   getWordTranslations,
   normalizePinyinInput,
   normalizeTitle,
+  memoryPrompts,
   qs,
   readCustomContents,
   readMistakes,
@@ -79,6 +85,7 @@ const el = {
   libraryTitle: qs('#libraryTitle'),
   libraryView: qs('#libraryView'),
   mistakeCount: qs('#mistakeCount'),
+  memoryTab: qs('#memoryTab'),
   mobileSidebarToggle: qs('#mobileSidebarToggle'),
   nextButton: qs('#nextButton'),
   positionInfo: qs('#positionInfo'),
@@ -138,6 +145,13 @@ let funCandidates = []
 let contentSearchQuery = ''
 let activeLibrary = 'favorites'
 let favoriteIds = new Set()
+let memoryDifficulty = 'normal'
+let memoryType = '成语'
+let memorySession = null
+let memoryTypedValue = ''
+let memoryRevealTimeout = 0
+let memoryShowPinyin = localStorage.getItem(MEMORY_PINYIN_KEY) === '1'
+let memoryComparison = null
 const completionAudio = createCompletionAudio()
 const contentLibrary = createContentLibrary({
   storage: localStorage,
@@ -350,6 +364,7 @@ function renderContentList() {
   el.historyTab.classList.toggle('active', activeView === 'history')
   el.storyTab.classList.toggle('active', activeView === 'story')
   el.detectiveTab.classList.toggle('active', activeView === 'detective')
+  el.memoryTab.classList.toggle('active', activeView === 'memory')
   el.funModesTab.classList.toggle('active', activeView === 'fun')
 }
 
@@ -1002,6 +1017,256 @@ function renderFunHub() {
   `
 }
 
+function readMemoryRecords() {
+  try {
+    const records = JSON.parse(localStorage.getItem(MEMORY_RECORD_KEY) || '{}')
+    return records && typeof records === 'object' && !Array.isArray(records) ? records : {}
+  } catch {
+    return {}
+  }
+}
+
+function getMemoryRecord() {
+  const record = readMemoryRecords()[memoryDifficulty]
+  return {
+    bestScore: Number(record?.bestScore) || 0,
+    bestStreak: Number(record?.bestStreak) || 0,
+    bestCpm: Number(record?.bestCpm) || 0,
+    lastCpm: Number(record?.lastCpm) || 0,
+    lastAccuracy: Number(record?.lastAccuracy) || 0,
+    plays: Number(record?.plays) || 0
+  }
+}
+
+function saveMemoryResult(summary) {
+  const records = readMemoryRecords()
+  const previous = getMemoryRecord()
+  memoryComparison = previous.plays ? {
+    cpmDelta: summary.cpm - previous.lastCpm,
+    accuracyDelta: summary.accuracy - previous.lastAccuracy,
+    previousCpm: previous.lastCpm,
+    previousAccuracy: previous.lastAccuracy
+  } : null
+  records[memoryDifficulty] = {
+    bestScore: Math.max(previous.bestScore, summary.accuracy),
+    bestStreak: Math.max(previous.bestStreak, summary.bestStreak),
+    bestCpm: Math.max(previous.bestCpm, summary.cpm),
+    lastCpm: summary.cpm,
+    lastAccuracy: summary.accuracy,
+    plays: previous.plays + 1
+  }
+  localStorage.setItem(MEMORY_RECORD_KEY, JSON.stringify(records))
+}
+
+function openMemory() {
+  window.clearTimeout(memoryRevealTimeout)
+  memorySession = null
+  memoryTypedValue = ''
+  memoryComparison = null
+  activeView = 'memory'
+  render()
+  closeMobileSidebar()
+}
+
+function startMemoryRound() {
+  memoryTypedValue = ''
+  memoryComparison = null
+  memorySession = createMemorySession({
+    prompts: createSharedMemoryPrompts(memoryPrompts, getContents()),
+    type: memoryType,
+    difficulty: memoryDifficulty
+  })
+  activeView = 'memory'
+  render()
+}
+
+function beginMemoryInput() {
+  if (!memorySession || memorySession.getState().phase !== 'reveal') return
+  window.clearTimeout(memoryRevealTimeout)
+  memorySession.beginInput()
+  memoryTypedValue = ''
+  render()
+  requestAnimationFrame(() => qs('#memoryInput', el.funContent)?.focus({ preventScroll: true }))
+}
+
+function submitMemoryAttempt() {
+  if (!memorySession || memorySession.getState().phase !== 'input') return
+  const result = memorySession.submit(memoryTypedValue)
+  if (!result) return
+  memoryTypedValue = ''
+  const state = memorySession.getState()
+  if (state.phase === 'complete') {
+    saveMemoryResult(state.summary)
+    if (state.summary.accuracy === 100) completionAudio.play()
+  }
+  render()
+}
+
+function renderMemoryTypedValue() {
+  if (!memoryTypedValue) return '<span class="memory-placeholder">开始输入你记住的内容…</span>'
+  return Array.from(memoryTypedValue, char => `<span>${escapeHtml(char)}</span>`).join('')
+}
+
+function renderMemoryTarget(text) {
+  if (!memoryShowPinyin || !/[\p{Script=Han}]/u.test(text)) return escapeHtml(text)
+  return Array.from(text, char => `
+    <span class="memory-target-char">
+      <small>${/\p{Script=Han}/u.test(char) ? escapeHtml(getPinyin(char)) : ''}</small>
+      <strong>${escapeHtml(char)}</strong>
+    </span>
+  `).join('')
+}
+
+function formatMemoryDelta(value, suffix) {
+  if (!value) return '与上次持平'
+  return `较上次 ${value > 0 ? '+' : ''}${value}${suffix}`
+}
+
+function scheduleMemoryReveal(state) {
+  window.clearTimeout(memoryRevealTimeout)
+  const session = memorySession
+  const index = state.index
+  memoryRevealTimeout = window.setTimeout(() => {
+    const current = memorySession?.getState()
+    if (activeView !== 'memory' || memorySession !== session || current?.phase !== 'reveal' || current.index !== index) return
+    beginMemoryInput()
+  }, state.remainingMilliseconds)
+}
+
+function renderMemorySetup() {
+  const record = getMemoryRecord()
+  return `
+    <div class="memory-shell">
+      <div class="memory-intro">
+        <p class="eyebrow">看清楚，然后相信记忆</p>
+        <h2>记忆闪打</h2>
+        <p>每组连续完成多题：文字按难度短暂显示，隐藏后凭记忆输入，按 Enter 立即进入下一题。</p>
+      </div>
+      <section class="memory-options">
+        <h3>选择内容</h3>
+        <div class="memory-choice-row">
+          ${['成语', '诗词', '单词', 'JavaScript', 'Python', 'HTML', 'CSS', '短句'].map(type => `
+            <button class="memory-choice ${memoryType === type ? 'active' : ''}" type="button" data-memory-type="${type}">${type}</button>
+          `).join('')}
+        </div>
+        <label class="memory-pinyin-option">
+          <input id="memoryPinyinToggle" type="checkbox" ${memoryShowPinyin ? 'checked' : ''} />
+          <span><strong>显示拼音</strong><small>成语、诗词和中文短句在记忆阶段显示无声调拼音。</small></span>
+        </label>
+        <h3>选择难度</h3>
+        <div class="memory-difficulty-grid">
+          ${MEMORY_DIFFICULTIES.map(item => `
+            <button class="memory-difficulty ${memoryDifficulty === item.id ? 'active' : ''}" type="button" data-memory-difficulty="${item.id}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${item.roundCount} 题 · ${item.revealSeconds} 秒</span>
+              <small>${escapeHtml(item.description)}</small>
+            </button>
+          `).join('')}
+        </div>
+      </section>
+      <div class="memory-records">
+        <span>本难度最高分 <strong>${record.bestScore}</strong></span>
+        <span>最佳连对 <strong>${record.bestStreak}</strong></span>
+      </div>
+      <div class="story-actions">
+        <button class="soft-button" type="button" data-open-fun-hub>返回全部玩法</button>
+        <button class="solid-button" type="button" data-start-memory-round>开始本组</button>
+      </div>
+    </div>
+  `
+}
+
+function renderMemory() {
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = false
+  el.libraryView.hidden = true
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '记忆闪打'
+  el.currentTitle.textContent = memorySession ? `${memoryType} · ${MEMORY_DIFFICULTIES.find(item => item.id === memoryDifficulty)?.title || ''}` : '记忆闪打'
+
+  if (!memorySession) {
+    el.funContent.innerHTML = renderMemorySetup()
+    return
+  }
+
+  const state = memorySession.getState()
+  if (state.phase === 'reveal') {
+    el.funContent.innerHTML = `
+      <div class="memory-shell memory-stage">
+        <p class="eyebrow">${escapeHtml(state.prompt.type)} · ${escapeHtml(state.difficulty.title)} · 第 ${state.index + 1} / ${state.total} 题</p>
+        <div class="memory-countdown"><strong id="memoryCountdown">${state.remainingSeconds}</strong><span>秒后隐藏</span></div>
+        <div class="memory-target ${memoryShowPinyin ? 'with-pinyin' : ''}" aria-label="需要记忆的内容">${renderMemoryTarget(state.prompt.text)}</div>
+        <p class="memory-tip">倒计时结束后会自动隐藏并进入输入，不需要点击。</p>
+      </div>
+    `
+    scheduleMemoryReveal(state)
+    return
+  }
+
+  if (state.phase === 'input') {
+    el.funContent.innerHTML = `
+      <div class="memory-shell memory-stage">
+        <p class="eyebrow">原文已隐藏 · 第 ${state.index + 1} / ${state.total} 题</p>
+        <div class="memory-hidden-mark" aria-hidden="true">••••••</div>
+        <div id="memoryTypedPreview" class="memory-typed-preview" aria-live="polite">${renderMemoryTypedValue()}</div>
+        <label class="memory-input-label" for="memoryInput">输入你记住的内容</label>
+        <textarea id="memoryInput" class="memory-input" rows="1" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="在这里输入…">${escapeHtml(memoryTypedValue)}</textarea>
+        <p class="memory-tip">输入完成后按 Enter，下一题会立即出现。输入法选词时的回车不会误提交。</p>
+        <button class="solid-button" type="button" data-submit-memory>提交并进入下一题</button>
+      </div>
+    `
+    requestAnimationFrame(() => qs('#memoryInput', el.funContent)?.focus({ preventScroll: true }))
+    return
+  }
+
+  const result = state.summary
+  const record = getMemoryRecord()
+  el.funContent.innerHTML = `
+    <div class="memory-shell memory-result">
+      <p class="eyebrow">本组 ${state.total} 题完成 · ${escapeHtml(state.difficulty.title)}</p>
+      <div class="ending-mark">${result.perfectCount === state.total ? '★' : '↺'}</div>
+      <h2>${result.perfectCount === state.total ? '整组全对' : `答对 ${result.perfectCount} / ${state.total} 题`}</h2>
+      <div class="memory-score-grid">
+        <div><span>得分</span><strong>${result.accuracy}</strong></div>
+        <div><span>速度</span><strong>${result.cpm} CPM</strong></div>
+        <div><span>英文速度</span><strong>${result.wpm} WPM</strong></div>
+        <div><span>平均每题</span><strong>${result.averageSeconds}s</strong></div>
+        <div><span>正确</span><strong>${result.correct}</strong></div>
+        <div><span>错字</span><strong>${result.wrong}</strong></div>
+        <div><span>漏字</span><strong>${result.omitted}</strong></div>
+        <div><span>顺序错误</span><strong>${result.orderErrors}</strong></div>
+      </div>
+      <div class="memory-performance-compare">
+        <div><span>本组总用时</span><strong>${result.durationSeconds}s</strong></div>
+        <div><span>历史最佳速度</span><strong>${record.bestCpm} CPM</strong></div>
+        <div><span>速度对比</span><strong>${memoryComparison ? formatMemoryDelta(memoryComparison.cpmDelta, ' CPM') : '首次记录'}</strong></div>
+        <div><span>准确率对比</span><strong>${memoryComparison ? formatMemoryDelta(memoryComparison.accuracyDelta, '%') : '首次记录'}</strong></div>
+      </div>
+      <div class="memory-attempt-list">
+        ${state.attempts.map((attempt, index) => `
+          <article class="memory-attempt ${attempt.perfect ? 'perfect' : ''}">
+            <span>${index + 1}</span>
+            <div><small>原文</small><strong>${escapeHtml(attempt.target)}</strong></div>
+            <div><small>输入</small><strong>${escapeHtml(attempt.typed || '（未输入）')}</strong></div>
+            <em>${attempt.perfect ? '正确' : `错 ${attempt.wrong} · 漏 ${attempt.omitted} · 序 ${attempt.orderErrors}`}</em>
+          </article>
+        `).join('')}
+      </div>
+      <div class="memory-records">
+        <span>本组最佳连对 <strong>${result.bestStreak}</strong></span>
+        <span>最高分 <strong>${record.bestScore}</strong></span>
+        <span>最佳连对 <strong>${record.bestStreak}</strong></span>
+      </div>
+      <div class="story-actions">
+        <button class="soft-button" type="button" data-configure-memory>调整难度</button>
+        <button class="solid-button" type="button" data-start-memory-round>再来一组</button>
+      </div>
+    </div>
+  `
+}
+
 function renderStory() {
   const node = activeStory.nodes[storyNodeId]
   el.practiceView.hidden = true
@@ -1286,6 +1551,7 @@ function render() {
   else if (activeView === 'history') renderHistory()
   else if (activeView === 'library') renderLibrary()
   else if (activeView === 'fun') renderFunHub()
+  else if (activeView === 'memory') renderMemory()
   else if (activeView === 'story') renderStory()
   else if (activeView === 'detective') renderDetective()
   else renderPractice()
@@ -1637,8 +1903,20 @@ function bindEvents() {
     startDetective()
     closeMobileSidebar()
   })
+  el.memoryTab.addEventListener('click', openMemory)
   el.funContent.addEventListener('input', event => {
     if (event.target.matches('#funTypingInput') && event.target.dataset.composing !== '1') updateFunInput(event.target)
+    if (event.target.matches('#memoryInput')) {
+      memoryTypedValue = event.target.value.replace(/\s+/g, '')
+      if (event.target.value !== memoryTypedValue) event.target.value = memoryTypedValue
+      const preview = qs('#memoryTypedPreview', el.funContent)
+      if (preview) preview.innerHTML = renderMemoryTypedValue()
+    }
+  })
+  el.funContent.addEventListener('change', event => {
+    if (!event.target.matches('#memoryPinyinToggle')) return
+    memoryShowPinyin = event.target.checked
+    localStorage.setItem(MEMORY_PINYIN_KEY, memoryShowPinyin ? '1' : '0')
   })
   el.funContent.addEventListener('compositionstart', event => {
     if (event.target.matches('#funTypingInput')) event.target.dataset.composing = '1'
@@ -1649,6 +1927,12 @@ function bindEvents() {
     updateFunInput(event.target)
   })
   el.funContent.addEventListener('keydown', event => {
+    if (event.target.matches('#memoryInput') && event.key === 'Enter') {
+      if (event.isComposing || event.keyCode === 229) return
+      event.preventDefault()
+      submitMemoryAttempt()
+      return
+    }
     if (!event.target.matches('#funTypingInput') || event.key !== 'Enter') return
     if (event.isComposing || event.keyCode === 229 || event.target.dataset.composing === '1') return
     if (activeView === 'detective' && detectiveState.getState().phase === 'accusation') {
@@ -1659,10 +1943,28 @@ function bindEvents() {
   el.funContent.addEventListener('click', event => {
     if (event.target.closest('[data-toggle-fun-keyboard]')) toggleFunKeyboard()
     if (event.target.closest('[data-start-fun="branching-story"]')) startStory()
+    if (event.target.closest('[data-start-fun="memory"]')) openMemory()
     if (event.target.closest('[data-restart-story]')) startStory()
     if (event.target.closest('[data-start-fun="detective"], [data-restart-detective]')) startDetective()
     if (event.target.closest('[data-begin-detective]')) beginDetective()
     if (event.target.closest('[data-submit-detective]')) submitDetectiveAnswer()
+    if (event.target.closest('[data-start-memory-round]')) startMemoryRound()
+    if (event.target.closest('[data-submit-memory]')) submitMemoryAttempt()
+    if (event.target.closest('[data-configure-memory]')) {
+      memorySession = null
+      memoryTypedValue = ''
+      render()
+    }
+    const memoryTypeButton = event.target.closest('[data-memory-type]')
+    if (memoryTypeButton) {
+      memoryType = memoryTypeButton.dataset.memoryType
+      render()
+    }
+    const memoryDifficultyButton = event.target.closest('[data-memory-difficulty]')
+    if (memoryDifficultyButton) {
+      memoryDifficulty = memoryDifficultyButton.dataset.memoryDifficulty
+      render()
+    }
     if (event.target.closest('[data-open-fun-hub]')) {
       activeView = 'fun'
       render()
@@ -1731,6 +2033,12 @@ Object.assign(window.OhMyType, { renderFunKeyboard, toggleFunKeyboard })
 bindEvents()
 render()
 durationTimer = window.setInterval(() => {
+  if (activeView === 'memory' && memorySession?.getState().phase === 'reveal') {
+    const state = memorySession.getState()
+    const countdown = qs('#memoryCountdown', el.funContent)
+    if (countdown) countdown.textContent = String(state.remainingSeconds)
+    return
+  }
   if (activeView !== 'practice' || typing.isFinished) return
   const stats = typing.getStats()
   const timeLimit = getTimeLimit()

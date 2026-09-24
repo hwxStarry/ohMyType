@@ -1,7 +1,7 @@
 {
   "name": "Oh My Type",
   "short_name": "Oh My Type",
-  "description": "免费中文在线打字练习，支持拼音、古诗词、文言文、文章、对话、剧情分支和侦探解谜。",
+  "description": "免费中文在线打字练习，支持拼音、古诗词、文言文、文章、对话、剧情分支、侦探解谜和记忆闪打。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
