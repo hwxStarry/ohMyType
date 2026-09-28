@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="./styles/base.css" />
     <link rel="stylesheet" href="./styles/sidebar.css" />
     <link rel="stylesheet" href="./styles/topbar.css" />
+    <link rel="stylesheet" href="./styles/home.css" />
     <link rel="stylesheet" href="./styles/practice.css" />
     <link rel="stylesheet" href="./styles/games.css" />
     <link rel="stylesheet" href="./styles/fun.css" />
@@ -39,12 +40,18 @@
     <div id="appShell" class="app-shell">
       <aside class="sidebar" aria-label="内容侧边栏">
         <div class="side-head">
-          <div class="brand" aria-label="Oh My Type">
+          <button id="brandHome" class="brand" type="button" aria-label="返回 Oh My Type 首页">
             <span class="brand-mark">墨</span>
             <span class="brand-text">Oh My Type</span>
-          </div>
+          </button>
           <button id="sidebarToggle" class="side-toggle" type="button" aria-label="收起侧边栏" title="收起侧边栏">‹</button>
         </div>
+
+        <button id="homeTab" class="side-action home-side-action" type="button">
+          <span class="home-side-icon" aria-hidden="true">⌂</span>
+          <span class="home-side-label">首页</span>
+          <span class="count">开始</span>
+        </button>
 
         <details class="side-section" data-side-section="content" open>
           <summary class="side-title">练习内容</summary>
@@ -132,7 +139,14 @@
           </div>
         </header>
 
-        <section id="practiceView" class="practice-layout">
+        <section id="homeView" class="home-view">
+          <div id="homeContent" class="home-content">
+            <h2>中文、诗词、英语、代码和对话，都可以在这里练习</h2>
+            <p>选择普通练习，也可以体验剧情分支、侦探解谜和记忆闪打。</p>
+          </div>
+        </section>
+
+        <section id="practiceView" class="practice-layout" hidden>
           <div class="practice-inner">
             <div class="progress-row">
               <span>课程进度</span>
@@ -327,6 +341,7 @@
     <script src="./src/fun-data.js"></script>
     <script src="./src/utils.js"></script>
     <script src="./src/content-library.js"></script>
+    <script src="./src/home-state.js"></script>
     <script src="./src/fun-typing.js"></script>
     <script src="./src/memory-state.js"></script>
     <script src="./src/detective-state.js"></script>

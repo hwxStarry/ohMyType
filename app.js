@@ -17,6 +17,7 @@ const {
   createMemoryAudio,
   createContentLibrary,
   createDetectiveState,
+  createHomeModel,
   createMemorySession,
   createSharedMemoryPrompts,
   createTypingState,
@@ -26,6 +27,7 @@ const {
   getDefaultFunKeyboardOpen,
   getFunKeyboardKeys,
   getFunTypingState,
+  getHomeTrackContents,
   funModes,
   games,
   getPinyin,
@@ -39,6 +41,7 @@ const {
   readOpenCategories,
   readPracticeHistory,
   renderKeyboard,
+  renderHomeMarkup,
   searchContents,
   summarizeBody,
   writeCustomContents,
@@ -80,6 +83,10 @@ const el = {
   historySummary: qs('#historySummary'),
   historyTab: qs('#historyTab'),
   historyView: qs('#historyView'),
+  homeContent: qs('#homeContent'),
+  homeTab: qs('#homeTab'),
+  homeView: qs('#homeView'),
+  brandHome: qs('#brandHome'),
   libraryDescription: qs('#libraryDescription'),
   libraryList: qs('#libraryList'),
   libraryRandomButton: qs('#libraryRandomButton'),
@@ -129,8 +136,9 @@ const PROGRAMMING_CATEGORY_PREFIX = '编程·'
 const REVIEW_MASTERY_TARGET = 3
 const WEAK_REVIEW_ID = 'generated-weak-review'
 const MISTAKE_REVIEW_ID = 'generated-mistake-review'
+const HOME_DEMO_SAMPLES = ['床前明月光', 'Array.from()', '今晚一起去散步吗？', '凶手的证词有矛盾']
 let activeId = getInitialActiveId()
-let activeView = 'practice'
+let activeView = 'home'
 let durationTimer = 0
 let practiceMode = localStorage.getItem(MODE_KEY) || 'free'
 let activeStory = branchingStories[0]
@@ -154,6 +162,10 @@ let memoryRevealTimeout = 0
 let memoryShowPinyin = localStorage.getItem(MEMORY_PINYIN_KEY) === '1'
 let memoryComparison = null
 let memoryLastTickKey = ''
+let homeDemoTimer = 0
+let homeDemoIndex = 0
+let homeDemoPosition = 0
+let homeDemoDeleting = false
 const completionAudio = createCompletionAudio()
 const memoryAudio = createMemoryAudio()
 const contentLibrary = createContentLibrary({
@@ -369,6 +381,7 @@ function renderContentList() {
   el.detectiveTab.classList.toggle('active', activeView === 'detective')
   el.memoryTab.classList.toggle('active', activeView === 'memory')
   el.funModesTab.classList.toggle('active', activeView === 'fun')
+  el.homeTab.classList.toggle('active', activeView === 'home')
 }
 
 function renderProgrammingCategoryGroup(groups, openCategories) {
@@ -838,6 +851,7 @@ function renderLibraryItem(item) {
 function renderLibrary() {
   const isFavorites = activeLibrary === 'favorites'
   const contents = getActiveLibraryContents()
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -874,8 +888,109 @@ function startRandomFromCurrentCategory() {
   startRandomPractice(contents)
 }
 
+function stopHomeDemo() {
+  window.clearTimeout(homeDemoTimer)
+  homeDemoTimer = 0
+}
+
+function scheduleHomeDemo() {
+  stopHomeDemo()
+  if (activeView !== 'home') return
+  const textEl = qs('#homeDemoText', el.homeContent)
+  const indexEl = qs('.home-stage-index', el.homeContent)
+  if (!textEl || !indexEl) return
+  const sample = HOME_DEMO_SAMPLES[homeDemoIndex]
+  const chars = Array.from(sample)
+  textEl.textContent = chars.slice(0, homeDemoPosition).join('')
+  indexEl.textContent = `${String(homeDemoIndex + 1).padStart(2, '0')} / ${String(HOME_DEMO_SAMPLES.length).padStart(2, '0')}`
+
+  let delay = homeDemoDeleting ? 45 : 90
+  if (!homeDemoDeleting && homeDemoPosition >= chars.length) {
+    homeDemoDeleting = true
+    delay = 1500
+  } else if (homeDemoDeleting && homeDemoPosition <= 0) {
+    homeDemoDeleting = false
+    homeDemoIndex = (homeDemoIndex + 1) % HOME_DEMO_SAMPLES.length
+    delay = 320
+  } else {
+    homeDemoPosition += homeDemoDeleting ? -1 : 1
+  }
+  homeDemoTimer = window.setTimeout(scheduleHomeDemo, delay)
+}
+
+function getHomeModel() {
+  return createHomeModel({
+    contents: getContents(),
+    recentIds: contentLibrary.readRecentIds(),
+    memoryPrompts,
+    history: readPracticeHistory()
+  })
+}
+
+function openHome() {
+  window.clearTimeout(memoryRevealTimeout)
+  el.resultModal.hidden = true
+  activeView = 'home'
+  render()
+  closeMobileSidebar()
+}
+
+function renderHome() {
+  el.homeView.hidden = false
+  el.practiceView.hidden = true
+  el.gamesView.hidden = true
+  el.historyView.hidden = true
+  el.funView.hidden = true
+  el.libraryView.hidden = true
+  setPracticeControlsVisible(false)
+  el.currentCategory.textContent = '开始'
+  el.currentTitle.textContent = 'Oh My Type'
+  el.homeContent.innerHTML = renderHomeMarkup(getHomeModel())
+  homeDemoIndex = 0
+  homeDemoPosition = Array.from(HOME_DEMO_SAMPLES[0]).length
+  homeDemoDeleting = false
+  scheduleHomeDemo()
+}
+
+function handleHomeClick(event) {
+  const trackButton = event.target.closest('[data-home-track]')
+  if (trackButton) {
+    startRandomPractice(getHomeTrackContents(getContents(), trackButton.dataset.homeTrack))
+    return
+  }
+
+  const funButton = event.target.closest('[data-home-fun]')
+  if (funButton) {
+    if (funButton.dataset.homeFun === 'story') startStory()
+    if (funButton.dataset.homeFun === 'detective') startDetective()
+    if (funButton.dataset.homeFun === 'memory') openMemory()
+    return
+  }
+
+  const personalButton = event.target.closest('[data-home-personal]')
+  if (personalButton?.dataset.homePersonal === 'recent') openLibrary('recents')
+  if (personalButton?.dataset.homePersonal === 'history') {
+    activeView = 'history'
+    render()
+  }
+  if (personalButton) return
+
+  const action = event.target.closest('[data-home-action]')?.dataset.homeAction
+  if (action === 'random') startRandomPractice(getContents())
+  if (action === 'continue') {
+    const item = getHomeModel().continueItem
+    if (item) selectContent(item.id)
+  }
+  if (action === 'custom') openEditor()
+  if (action === 'fun-hub') {
+    activeView = 'fun'
+    render()
+  }
+}
+
 function renderPractice() {
   const active = getActiveContent()
+  el.homeView.hidden = true
   el.practiceView.hidden = false
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -890,6 +1005,7 @@ function renderPractice() {
 
 function renderGames() {
   const gameGroups = ['竞速类', '射击防守类', '格斗类', '儿童轻量类', '游戏合集', '练习工具']
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = false
   el.historyView.hidden = true
@@ -945,6 +1061,7 @@ function renderHistory() {
     ? Math.round(history.reduce((total, item) => total + (Number(item.accuracy) || 0), 0) / history.length)
     : 100
 
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = false
@@ -988,6 +1105,7 @@ function setPracticeControlsVisible(visible) {
 }
 
 function renderFunHub() {
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -1228,6 +1346,7 @@ function renderMemorySetup() {
 }
 
 function renderMemory() {
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -1324,6 +1443,7 @@ function renderMemory() {
 
 function renderStory() {
   const node = activeStory.nodes[storyNodeId]
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -1524,6 +1644,7 @@ function submitDetectiveAnswer() {
 
 function renderDetective() {
   const state = detectiveState.getState()
+  el.homeView.hidden = true
   el.practiceView.hidden = true
   el.gamesView.hidden = true
   el.historyView.hidden = true
@@ -1602,7 +1723,9 @@ function renderDetective() {
 
 function render() {
   renderContentList()
-  if (activeView === 'games') renderGames()
+  if (activeView !== 'home') stopHomeDemo()
+  if (activeView === 'home') renderHome()
+  else if (activeView === 'games') renderGames()
   else if (activeView === 'history') renderHistory()
   else if (activeView === 'library') renderLibrary()
   else if (activeView === 'fun') renderFunHub()
@@ -1940,6 +2063,9 @@ function bindEvents() {
     saveSoundSettings()
   })
 
+  el.homeTab.addEventListener('click', openHome)
+  el.brandHome.addEventListener('click', openHome)
+  el.homeContent.addEventListener('click', handleHomeClick)
   el.gamesTab.addEventListener('click', () => {
     activeView = 'games'
     render()
