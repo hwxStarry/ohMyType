@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="./styles/library.css" />
     <link rel="stylesheet" href="./styles/dialogs.css" />
     <link rel="stylesheet" href="./styles/responsive.css" />
+    <link rel="stylesheet" href="./styles/feedback.css?v=20260930" />
   </head>
   <body>
     <div id="appShell" class="app-shell">
@@ -115,6 +116,7 @@
         </details>
 
         <div class="side-footer">
+          <button type="button" data-feedback-open>建议反馈</button>
           <a href="https://github.com/hwxStarry/ohMyType" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </aside>
@@ -132,6 +134,7 @@
           <h1 id="currentTitle">拼音入门</h1>
           <div class="toolbar">
             <span id="currentCategory" class="course-pill">拼音</span>
+            <button class="topbar-feedback" type="button" data-feedback-open title="建议反馈">反馈</button>
             <button id="soundButton" class="icon-button" type="button" aria-label="音效设置" title="音效设置">♪</button>
             <button id="editButton" class="icon-button primary" type="button" aria-label="编辑或粘贴文本" title="编辑或粘贴文本">
               ✎
@@ -351,6 +354,7 @@
     <script src="./src/typing-state.js"></script>
     <script src="./src/sounds.js"></script>
     <script src="./app.js"></script>
+    <script src="./src/feedback.js?v=20260930" data-feedback-source="ohmytype"></script>
     <script charset="UTF-8" id="LA_COLLECT" src="https://sdk.51.la/js-sdk-pro.min.js"></script>
     <script>if (window.LA) LA.init({id:"LHir1GpzFcKdVDaF",ck:"LHir1GpzFcKdVDaF",autoTrack:true})</script>
     <script type="application/ld+json">

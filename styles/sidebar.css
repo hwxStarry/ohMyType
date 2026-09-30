@@ -213,17 +213,35 @@ summary.side-title::after {
 .side-footer {
   margin-top: auto;
   padding: 10px;
+  display: grid;
+  gap: 6px;
 }
 
-.side-footer a {
+.side-footer a,
+.side-footer button {
   color: var(--muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
 }
 
-.side-footer a:hover {
+.side-footer button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.side-footer a:hover,
+.side-footer button:hover {
   color: var(--accent);
+}
+
+.side-footer small {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .category-group,

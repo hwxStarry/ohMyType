@@ -33,6 +33,25 @@
   justify-content: flex-end;
 }
 
+.topbar-feedback {
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.topbar-feedback:hover,
+.topbar-feedback:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .nav-button {
   height: 36px;
   display: inline-flex;
