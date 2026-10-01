@@ -12,16 +12,6 @@ A browser-based typing practice project for pinyin, poetry, English vocabulary, 
 - Memory drills, branching stories, and a detective typing game.
 - Practice history saved in the current browser; no account needed.
 
-## Run locally
-
-Open `index.html` directly, or start a static server from the repository root:
-
-```bash
-python3 -m http.server 8080
-```
-
-Then visit `http://localhost:8080/`. The project uses plain HTML, CSS, and JavaScript with no build step.
-
 ## Tests
 
 ```bash

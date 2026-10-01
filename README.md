@@ -12,16 +12,6 @@
 - 包含记忆闪打、剧情分支和侦探解谜等趣味练习。
 - 练习记录保存在当前浏览器，无需注册。
 
-## 本地运行
-
-直接打开 `index.html`，或在仓库目录启动静态服务：
-
-```bash
-python3 -m http.server 8080
-```
-
-然后访问 `http://localhost:8080/`。项目使用原生 HTML、CSS 和 JavaScript，无需构建。
-
 ## 测试
 
 ```bash
